@@ -21,8 +21,6 @@ jobs:
 
     - name: Build CLI
       run: cargo build --release
-      env:
-        GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
 
     - name: Build site
       run: |
@@ -31,7 +29,7 @@ jobs:
     - name: Deploy
       uses: JamesIves/github-pages-deploy-action@releases/v3
       with:
-        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         BRANCH: page
         FOLDER: public
         SINGLE_COMMIT: true
