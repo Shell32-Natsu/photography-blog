@@ -1,79 +1,37 @@
-name: Rust
+name: Build site
 
 on:
   push:
-    tags:
-      - "v*.*.*"
+    branches:
+    - master
 env:
   CARGO_TERM_COLOR: always
   
 jobs:
-  release:
-    name: build and release
-    runs-on: ${{ matrix.os }}
+  build:
+    name: build and deploy
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
-      matrix:
-        os: [windows-2019, macos-11, ubuntu-latest]
 
     steps:
-      - name: Check out git repository
-        uses: actions/checkout@master
+    - name: Check out git repository
+      uses: actions/checkout@v2
 
-      - name: Build
-        run: cargo build --release
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-          
-      - name: rename
-        if: matrix.os == 'ubuntu-latest'
-        run: mv target/release/blog-cli target/release/blog-cli-linux
-      - name: rename
-        if: matrix.os == 'macos-11'
-        run: mv target/release/blog-cli target/release/blog-cli-macos
-        
-      - name: upload windows artifacts
-        uses: actions/upload-artifact@v3.0.0
-        if: matrix.os == 'windows-2019'
-        with:
-          name: "Windows"
-          path: target/release/blog-cli.exe
-          
-      - name: upload linux artifacts
-        uses: actions/upload-artifact@v3.0.0
-        if: matrix.os == 'ubuntu-latest'
-        with:
-          name: "Linux"
-          path: target/release/blog-cli-linux
+    - name: Build CLI
+      run: cargo build --release
+      env:
+        GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
 
-      - name: upload macos artifacts
-        uses: actions/upload-artifact@v3.0.0
-        if: matrix.os == 'macos-11'
-        with:
-          name: "MacOS"
-          path: target/release/blog-cli-macos
+    - name: Build site
+      run: |
+        target/release/blog-cli
 
-      - name: release
-        uses: softprops/action-gh-release@v1
-        if: matrix.os == 'ubuntu-latest'
-        with:
-          files: "target/release/blog-cli-linux"
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-
-      - name: release
-        uses: softprops/action-gh-release@v1
-        if: matrix.os == 'macos-11'
-        with:
-          files: "target/release/blog-cli-macos"
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-          
-      - name: release
-        uses: softprops/action-gh-release@v1
-        if: matrix.os == 'windows-2019'
-        with:
-          files: "target/release/blog-cli.exe"
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+    - name: Deploy
+      uses: JamesIves/github-pages-deploy-action@releases/v3
+      with:
+        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        BRANCH: page
+        FOLDER: public
+        SINGLE_COMMIT: true
