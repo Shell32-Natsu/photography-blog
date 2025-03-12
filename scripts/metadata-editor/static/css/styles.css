@@ -1,0 +1,166 @@
+/* Custom styles for the photography blog */
+
+.all-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding-bottom: 10px;
+}
+
+/* Fixed position for tags panel */
+.sticky-top {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+
+/* Set max height for the card body to allow scrolling if too many tags */
+.sticky-top .card {
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+}
+
+/* Custom colors for tags */
+.custom-purple {
+    background-color: #6f42c1;
+    color: white;
+}
+
+.custom-pink {
+    background-color: #e83e8c;
+    color: white;
+}
+
+.custom-orange {
+    background-color: #fd7e14;
+    color: white;
+}
+
+/* Drag and drop styles */
+.tag-badge {
+    cursor: grab;
+    transition: transform 0.1s ease;
+}
+
+.tag-badge:hover {
+    transform: scale(1.05);
+}
+
+.tag-badge:active,
+.tag-badge.dragging {
+    cursor: grabbing;
+    opacity: 0.7;
+}
+
+.card.drag-over {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    transform: scale(1.01);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.saving-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    font-weight: bold;
+    color: #0d6efd;
+}
+
+/* Make dark text on light backgrounds */
+.bg-warning {
+    color: #212529;
+}
+
+.bg-info {
+    color: #212529;
+}
+
+.card {
+    position: relative;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-img-top {
+    object-fit: contain;
+    height: 200px;
+    width: 100%;
+    background-color: #f8f9fa;
+}
+
+.tags {
+    min-height: 2rem;
+}
+
+.badge {
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.tags-edit {
+    margin-top: 0.5rem;
+}
+
+.tag-input {
+    width: 100%;
+}
+
+/* Hover effect on edit button */
+.edit-tags-btn {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.card:hover .edit-tags-btn {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Pagination styles */
+.pagination-links {
+    display: flex;
+    align-items: center;
+}
+
+.pagination-link {
+    display: inline-block;
+    padding: 5px 10px;
+    margin: 0 3px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #0d6efd;
+    font-weight: 500;
+}
+
+.pagination-link:hover {
+    background-color: #f8f9fa;
+    color: #0a58ca;
+}
+
+.pagination-link-active {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+    pointer-events: none;
+}
+
+.pagination-link-active:hover {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.pagination-item {
+    display: inline-block;
+    padding: 5px 5px;
+    color: #6c757d;
+}
