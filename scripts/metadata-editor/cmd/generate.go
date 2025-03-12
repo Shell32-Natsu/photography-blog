@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand/v2"
 	"mime"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -147,14 +149,17 @@ func Generate(outputFile string) {
 
 		// Create the album
 		album := AlbumConfig{
-			Title:    tag,     // Use the tag as the album title
-			URL:      urls[0], // Use the first photo as the album cover
+			Title:    tag,                        // Use the tag as the album title
+			URL:      urls[rand.IntN(len(urls))], // Use the first photo as the album cover
 			Children: photoEntries,
 		}
 
 		// Add the album to the blog config
 		blogConfig.Children = append(blogConfig.Children, album)
 	}
+	sort.Slice(blogConfig.Children, func(i, j int) bool {
+		return blogConfig.Children[i].Title < blogConfig.Children[j].Title
+	})
 
 	// Convert to JSON
 	jsonData, err := json.MarshalIndent(blogConfig, "", "  ")
