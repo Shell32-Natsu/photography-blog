@@ -193,6 +193,11 @@ function displayPhoto(photo) {
         </div>
         <div class="tags-display"></div>
         <div class="tags-edit d-none">
+            <div class="tag-select-container mb-2">
+                <select class="form-select form-select-sm tag-select" multiple>
+                    <!-- Available tags will be populated here -->
+                </select>
+            </div>
             <input type="text" class="form-control form-control-sm mb-2 tag-input" placeholder="Add tags (comma separated)">
             <div class="d-flex">
                 <button class="btn btn-sm btn-primary save-tags-btn me-2">Save</button>
@@ -204,9 +209,28 @@ function displayPhoto(photo) {
     
     const tagsDisplay = tagsContainer.querySelector('.tags-display');
     const tagsInput = tagsContainer.querySelector('.tag-input');
+    const tagSelect = tagsContainer.querySelector('.tag-select');
     const editBtn = tagsContainer.querySelector('.edit-tags-btn');
     const saveBtn = tagsContainer.querySelector('.save-tags-btn');
     const cancelBtn = tagsContainer.querySelector('.cancel-tags-btn');
+    
+    // Populate tag dropdown with all available tags
+    populateTagSelect(tagSelect, state.allTags);
+    
+    // Initialize select2 for enhanced dropdown
+    $(tagSelect).select2({
+        placeholder: 'Select tags',
+        width: '100%',
+        tags: true,
+        tokenSeparators: [','],
+        theme: 'bootstrap',
+        closeOnSelect: false,
+        allowClear: true,
+        dropdownCssClass: 'select2-dropdown-compact',
+        minimumResultsForSearch: 6, // Only show search box when we have at least 6 options
+        templateResult: formatTagOption,  // Custom formatting for dropdown items
+        templateSelection: formatTagSelection  // Custom formatting for selected items
+    });
     
     // Display current tags
     let currentTags = photo.metadata && photo.metadata.tag ? photo.metadata.tag : '';
@@ -215,15 +239,40 @@ function displayPhoto(photo) {
     // Set up tag input with current tags
     tagsInput.value = currentTags;
     
+    // Set up tag select with current tags
+    updateTagSelect(tagSelect, currentTags);
+    
     // Edit button handler
     editBtn.addEventListener('click', () => {
         // Make sure tagsInput has the latest tags (including any that were dragged)
-        tagsInput.value = photo.metadata && photo.metadata.tag ? photo.metadata.tag : '';
+        const currentTags = photo.metadata && photo.metadata.tag ? photo.metadata.tag : '';
+        tagsInput.value = currentTags;
+        
+        // Update the tag select with current tags
+        updateTagSelect(tagSelect, currentTags);
+        
+        // Refresh the available options in case new tags were added
+        populateTagSelect(tagSelect, state.allTags, currentTags.split(',').map(t => t.trim()).filter(t => t));
+        
+        // Refresh select2 to apply the new options
+        $(tagSelect).select2('destroy').select2({
+            placeholder: 'Select tags',
+            width: '100%',
+            tags: true,
+            tokenSeparators: [','],
+            theme: 'bootstrap',
+            closeOnSelect: false,
+            allowClear: true,
+            dropdownCssClass: 'select2-dropdown-compact',
+            minimumResultsForSearch: 6,
+            templateResult: formatTagOption,
+            templateSelection: formatTagSelection
+        });
         
         tagsContainer.querySelector('.tags-display').classList.add('d-none');
         tagsContainer.querySelector('.tags-edit').classList.remove('d-none');
         editBtn.classList.add('d-none');
-        tagsInput.focus();
+        $(tagSelect).select2('open'); // Open dropdown immediately for better UX
     });
     
     // Cancel button handler
@@ -231,6 +280,13 @@ function displayPhoto(photo) {
         tagsContainer.querySelector('.tags-display').classList.remove('d-none');
         tagsContainer.querySelector('.tags-edit').classList.add('d-none');
         editBtn.classList.remove('d-none');
+    });
+    
+    // Tag select change handler using jQuery for select2 compatibility
+    $(tagSelect).on('change', function() {
+        // Update the text input with the selected tags
+        const selectedTags = $(this).val() || [];
+        tagsInput.value = selectedTags.join(',');
     });
     
     // Save button handler
@@ -497,6 +553,124 @@ window.addEventListener('popstate', () => {
     // Load photos with the new state
     loadPhotos();
 });
+
+// Populate tag select dropdown with all available tags
+function populateTagSelect(selectElement, allTags, selectedTags = []) {
+    // Keep currently selected values
+    const currentlySelected = Array.from(selectElement.selectedOptions).map(option => option.value);
+    
+    // Clear existing options
+    selectElement.innerHTML = '';
+    
+    if (!allTags || allTags.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No tags available';
+        option.disabled = true;
+        selectElement.appendChild(option);
+        return;
+    }
+    
+    // Sort tags alphabetically
+    const sortedTags = [...allTags].sort();
+    
+    // Color palette for tags (same as in displayAllTags)
+    const colorClasses = [
+        'bg-primary',    // Blue
+        'bg-success',    // Green
+        'bg-danger',     // Red
+        'bg-warning',    // Yellow
+        'bg-info',       // Light blue
+        'bg-dark',       // Dark gray/black
+        'bg-secondary',  // Gray
+        'custom-purple', // Purple (custom)
+        'custom-pink',   // Pink (custom)
+        'custom-orange'  // Orange (custom)
+    ];
+    
+    // Add options for each tag
+    sortedTags.forEach(tag => {
+        if (!tag) return; // Skip empty tags
+        
+        const option = document.createElement('option');
+        option.value = tag;
+        option.textContent = tag;
+        
+        // Determine if this tag should be selected
+        if (selectedTags.includes(tag) || currentlySelected.includes(tag)) {
+            option.selected = true;
+        }
+        
+        // Get a consistent color based on the tag name (same as in other functions)
+        const hashCode = tag.split('').reduce((acc, char) => {
+            return char.charCodeAt(0) + ((acc << 5) - acc);
+        }, 0);
+        const colorIndex = Math.abs(hashCode) % colorClasses.length;
+        
+        // Store the color class as a data attribute for styling
+        option.dataset.colorClass = colorClasses[colorIndex];
+        
+        selectElement.appendChild(option);
+    });
+}
+
+// Update tag select with current tags
+function updateTagSelect(selectElement, tagsString) {
+    // Get current tags as array
+    const currentTags = tagsString ? tagsString.split(',').map(t => t.trim()).filter(t => t) : [];
+    
+    // Update selection state of all options
+    Array.from(selectElement.options).forEach(option => {
+        option.selected = currentTags.includes(option.value);
+    });
+}
+
+// Format tag options for Select2 dropdown
+function formatTagOption(tag) {
+    if (!tag.id || !tag.element) {
+        return tag.text;
+    }
+    
+    // Get color class from the option's data attribute
+    const colorClass = tag.element.dataset.colorClass || 'bg-secondary';
+    
+    // Get color value based on class
+    let colorValue = getComputedColorForClass(colorClass);
+    
+    return $(`<span><span class="color-dot" style="background-color: ${colorValue};"></span> ${tag.text}</span>`);
+}
+
+// Format selected tags for Select2
+function formatTagSelection(tag) {
+    if (!tag.id || !tag.element) {
+        return tag.text;
+    }
+    
+    // Get color class from the option's data attribute
+    const colorClass = tag.element.dataset.colorClass || 'bg-secondary';
+    
+    // Return styled tag
+    return $(`<span class="${colorClass}">${tag.text}</span>`);
+}
+
+// Helper function to get computed color value for a class
+function getComputedColorForClass(colorClass) {
+    // Map of known color classes to hexadecimal values
+    const colorMap = {
+        'bg-primary': '#0d6efd',
+        'bg-success': '#198754',
+        'bg-danger': '#dc3545',
+        'bg-warning': '#ffc107',
+        'bg-info': '#0dcaf0',
+        'bg-dark': '#212529',
+        'bg-secondary': '#6c757d',
+        'custom-purple': '#6f42c1',
+        'custom-pink': '#e83e8c',
+        'custom-orange': '#fd7e14'
+    };
+    
+    return colorMap[colorClass] || '#6c757d';
+}
 
 // Display all available tags
 function displayAllTags() {
