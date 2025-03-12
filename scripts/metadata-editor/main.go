@@ -17,7 +17,7 @@ func main() {
 	// Define the base command
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: metadata-editor <command> [arguments]")
-		fmt.Println("Available commands: server, generate")
+		fmt.Println("Available commands: server, generate, refresh")
 		os.Exit(1)
 	}
 
@@ -45,9 +45,16 @@ func main() {
 		// Run the generate command
 		subcmd.Generate(*outputFile)
 
+	case "refresh":
+		refreshCmd := flag.NewFlagSet("refresh", flag.ExitOnError)
+		refreshCmd.Parse(os.Args[2:])
+		
+		// Run the refresh command to generate thumbnails
+		subcmd.Refresh()
+
 	default:
 		fmt.Printf("Unknown command: %s\n", cmd)
-		fmt.Println("Available commands: server, generate")
+		fmt.Println("Available commands: server, generate, refresh")
 		os.Exit(1)
 	}
 }

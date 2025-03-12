@@ -15,6 +15,8 @@ var (
 	R2Client *s3.Client
 	// BucketName is the name of the R2 bucket containing photos
 	BucketName string
+	// ThumbnailsBucketName is the bucket name for thumbnails
+	ThumbnailsBucketName string
 )
 
 // InitR2Client initializes the Cloudflare R2 client
@@ -23,9 +25,10 @@ func InitR2Client(ctx context.Context) {
 	accessKeyID := os.Getenv("CLOUDFLARE_ACCESS_KEY_ID")
 	accessKeySecret := os.Getenv("CLOUDFLARE_ACCESS_KEY_SECRET")
 	BucketName = os.Getenv("CLOUDFLARE_BUCKET_NAME")
+	ThumbnailsBucketName = os.Getenv("CLOUDFLARE_THUMBNAILS_BUCKET_NAME")
 
-	if accountID == "" || accessKeyID == "" || accessKeySecret == "" || BucketName == "" {
-		log.Fatal("Missing Cloudflare R2 credentials in environment variables")
+	if accountID == "" || accessKeyID == "" || accessKeySecret == "" || BucketName == "" || ThumbnailsBucketName == "" {
+		log.Fatal("Missing Cloudflare R2 credentials or bucket names in environment variables")
 	}
 
 	// Load the default AWS configuration
