@@ -1652,6 +1652,9 @@ input, select, textarea {
 				margin: 0;
 				position: absolute;
 				z-index: 1;
+				background: rgba(0, 0, 0, 0.5);
+				padding: 5px 8px;
+				border-radius: 5px;
 			}
 			#main .thumb .icon-album {
 				width: 1em;
