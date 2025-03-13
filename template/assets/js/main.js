@@ -223,7 +223,7 @@
             // <img> (which is then hidden). Gives us way more flexibility.
 
             // Set background.
-            $image.css('background-image', 'url(' + $image_img.attr('src').replace('photo-r2', 'photo-thumbs-r2') + ')');
+            $image.css('background-image', 'url("' + $image_img.attr('src').replace('photo-r2', 'photo-thumbs-r2') + '")');
             setTimeout(function () {
                 if ($image_img.next().hasClass('exif-wrapper')) {
                     return
@@ -262,7 +262,8 @@
 
 
         if ($linkImage.length !== 0) {
-            $linkImage.css('background-image', 'url(' + $link_img.attr('src').replace('photo-r2', 'photo-thumbs-r2') + ')');
+            let url = $link_img.attr('src').replace('photo-r2', 'photo-thumbs-r2');
+            $linkImage.css('background-image', 'url("' + url + '")');
             if (y = $link_img.data('position'))
                 $linkImage.css('background-position', x);
             $link_img.hide();
