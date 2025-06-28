@@ -81,6 +81,16 @@ func WalkList(
 				}
 			}
 			
+			// Generate thumbnail URL if image URL exists
+			if child.URL != nil && strings.Contains(*child.URL, "photo-r2") {
+				thumbnailURL := strings.Replace(*child.URL, "photo-r2", "photo-thumbs-r2", 1)
+				child.ThumbnailURL = &thumbnailURL
+			} else if child.URL != nil && child.Children == nil {
+				// If no children (it's a photo) and URL doesn't contain photo-r2, 
+				// still set ThumbnailURL to the same as URL
+				child.ThumbnailURL = child.URL
+			}
+			
 			WalkList(child, path, renderer, depth, extra)
 		}
 

@@ -14,6 +14,7 @@ type Website struct {
 	Description *string      `json:"description,omitempty"`
 	Children    []Website    `json:"children,omitempty"`
 	URL         *string      `json:"url,omitempty"`
+	ThumbnailURL *string     `json:"thumbnail_url,omitempty"`
 	Category    *string      `json:"category,omitempty"`
 	Author      *string      `json:"author,omitempty"`
 	Path        *string      `json:"path,omitempty"`

@@ -218,13 +218,11 @@
             $linkImage = $this.find('.link'), $link_img = $linkImage.children('img'), y;
         // No image? Bail.
         if ($image.length !== 0) {
-            // For individual photos in albums, use thumbnails and keep original URL in href
-            let originalSrc = $image_img.attr('src');
-            let thumbnailSrc = originalSrc.replace('photo-r2', 'photo-thumbs-r2');
-            $image_img.attr('data-original-src', originalSrc);
-            $image_img.attr('src', thumbnailSrc);
+            // Extract the original URL from the thumbnail URL if needed
+            let currentSrc = $image_img.attr('src');
+            let originalSrc = currentSrc.replace('photo-thumbs-r2', 'photo-r2');
             
-            // Update the parent link to point to the original image
+            // Update the parent link to point to the original full-size image
             $image.attr('href', originalSrc);
             
             // EXIF data handling
@@ -259,16 +257,7 @@
 
 
 
-        if ($linkImage.length !== 0) {
-            // Replace the src with thumbnail version
-            let originalSrc = $link_img.attr('src');
-            let thumbnailSrc = originalSrc.replace('photo-r2', 'photo-thumbs-r2');
-            $link_img.attr('data-original-src', originalSrc);
-            $link_img.attr('src', thumbnailSrc);
-            
-            // Don't change the href for album links - keep them pointing to the album page
-            // The href is already set correctly in the HTML template
-        }
+        // Album links don't need any processing since thumbnails are already set in HTML
 
     });
 

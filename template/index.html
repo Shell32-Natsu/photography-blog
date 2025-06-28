@@ -47,11 +47,11 @@
 							<article class="thumb">
 								{% if item.category == "album" %}
 									<a href="{{item.path}}" class="link">
-										<img src="{{item.url}}" alt="" />
+										<img src="{% if item.thumbnail_url %}{{item.thumbnail_url}}{% else %}{{item.url}}{% endif %}" alt="" loading="lazy" />
 									</a>
 								{% else %}
 									<a href="{{item.url}}" class="image">
-										<img src="{{item.url}}" alt="" />
+										<img src="{% if item.thumbnail_url %}{{item.thumbnail_url}}{% else %}{{item.url}}{% endif %}" alt="" loading="lazy" />
                                         {% if item.exif %}
                                             {% if item.exif.parsed %}
                                                 <span class="exif-wrapper">

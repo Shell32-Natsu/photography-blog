@@ -72,13 +72,14 @@ func (r *Renderer) Render(path string, data *parser.Website) error {
 		for _, child := range data.Children {
 			// Dereference pointers for template access
 			childMap := map[string]interface{}{
-				"title":       derefString(child.Title),
-				"description": derefString(child.Description),
-				"url":         derefString(child.URL),
-				"category":    derefString(child.Category),
-				"path":        derefString(child.Path),
-				"children":    child.Children,
-				"exif":        child.Exif,
+				"title":        derefString(child.Title),
+				"description":  derefString(child.Description),
+				"url":          derefString(child.URL),
+				"thumbnail_url": derefString(child.ThumbnailURL),
+				"category":     derefString(child.Category),
+				"path":         derefString(child.Path),
+				"children":     child.Children,
+				"exif":         child.Exif,
 			}
 			children = append(children, childMap)
 		}
