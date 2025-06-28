@@ -218,17 +218,21 @@
             $linkImage = $this.find('.link'), $link_img = $linkImage.children('img'), y;
         // No image? Bail.
         if ($image.length !== 0) {
-            // Image.
-            // This sets the background of the "image" <span> to the image pointed to by its child
-            // <img> (which is then hidden). Gives us way more flexibility.
-
-            // Set background.
-            $image.css('background-image', 'url("' + $image_img.attr('src').replace('photo-r2', 'photo-thumbs-r2') + '")');
+            // For individual photos in albums, use thumbnails and keep original URL in href
+            let originalSrc = $image_img.attr('src');
+            let thumbnailSrc = originalSrc.replace('photo-r2', 'photo-thumbs-r2');
+            $image_img.attr('data-original-src', originalSrc);
+            $image_img.attr('src', thumbnailSrc);
+            
+            // Update the parent link to point to the original image
+            $image.attr('href', originalSrc);
+            
+            // EXIF data handling
             setTimeout(function () {
                 if ($image_img.next().hasClass('exif-wrapper')) {
                     return
                 }
-                $.get($image_img.attr('src').replace(__imageStyleSuffix || '', '') + (__imageExifSuffix || ''), function (e) {
+                $.get(originalSrc.replace(__imageStyleSuffix || '', '') + (__imageExifSuffix || ''), function (e) {
                     if (e.FNumber) {
                         var aperture = e.FNumber.val;
                         var shutter = e.ExposureTime.val;
@@ -251,22 +255,19 @@
                     }
                 })
             }, 1500)
-            // Set background position.
-            if (x = $image_img.data('position'))
-                $image.css('background-position', x);
-
-            // Hide original img.
-            $image_img.hide();
         }
 
 
 
         if ($linkImage.length !== 0) {
-            let url = $link_img.attr('src').replace('photo-r2', 'photo-thumbs-r2');
-            $linkImage.css('background-image', 'url("' + url + '")');
-            if (y = $link_img.data('position'))
-                $linkImage.css('background-position', x);
-            $link_img.hide();
+            // Replace the src with thumbnail version
+            let originalSrc = $link_img.attr('src');
+            let thumbnailSrc = originalSrc.replace('photo-r2', 'photo-thumbs-r2');
+            $link_img.attr('data-original-src', originalSrc);
+            $link_img.attr('src', thumbnailSrc);
+            
+            // Don't change the href for album links - keep them pointing to the album page
+            // The href is already set correctly in the HTML template
         }
 
     });
@@ -274,17 +275,7 @@
     // Poptrox.
     $main.poptrox({
         baseZIndex: 20000,
-        caption: function ($a) {
-
-            var s = '';
-
-            $a.nextAll().each(function () {
-                s += this.outerHTML;
-            });
-            // console.log(s)
-            return s;
-
-        },
+        caption: false, // Disable captions completely
         fadeSpeed: 300,
         onPopupClose: function () { $body.removeClass('modal-active'); },
         onPopupOpen: function () { $body.addClass('modal-active'); },
@@ -294,8 +285,8 @@
         popupLoaderText: '',
         popupSpeed: 300,
         popupWidth: 150,
-        selector: '.thumb > a.image',
-        usePopupCaption: true,
+        selector: '.thumb > a.image', // Only apply lightbox to images, not album links
+        usePopupCaption: false,
         usePopupCloser: true,
         usePopupDefaultStyling: false,
         usePopupForceClose: true,
