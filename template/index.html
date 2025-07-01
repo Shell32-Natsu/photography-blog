@@ -1,216 +1,250 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <!--
-	Multiverse by HTML5 UP
-	html5up.net | @ajlkn
-	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+    Multiverse by HTML5 UP
+    html5up.net | @ajlkn
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
 -->
 <html>
-	<head>
-		<title>{{title}}</title>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<meta name="apple-mobile-web-app-capable" content="yes">
-		<meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <head>
+        <title>{{title}}</title>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         {% if description %}
-        <meta name="description" content="{{ description }}">
+        <meta name="description" content="{{ description }}" />
         {% endif %}
         <link rel="stylesheet" href="/assets/css/main.css" />
-		<noscript><link rel="stylesheet" href="/assets/css/noscript.css" /></noscript>
+        <noscript
+            ><link rel="stylesheet" href="/assets/css/noscript.css"
+        /></noscript>
         {% if extra %}
         <script>
-            
-            var __imageExifSuffix = '{{ extra.image_exif_query_suffix }}';
-            var __imageStyleSuffix = '{{ extra.image_style_suffix }}';
+            var __imageExifSuffix = "{{ extra.image_exif_query_suffix }}";
+            var __imageStyleSuffix = "{{ extra.image_style_suffix }}";
         </script>
         {% endif %}
-	</head>
-	<body class="is-preload{% if not author and title %} has-album-title{% endif %}">
+    </head>
+    <body
+        class="is-preload{% if not author and title %} has-album-title{% endif %}"
+    >
+        <!-- Wrapper -->
+        <div id="wrapper" class="main-wrapper">
+            <!-- Album Header for Album Pages -->
+            {% if not author and title %}
+            <div class="album-header">
+                <a href="/" class="home-button" title="Back to Home">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div class="album-title">{{title}}</div>
+            </div>
+            {% endif %}
 
-		<!-- Wrapper -->
-			<div id="wrapper" class="main-wrapper">
+            <!-- Main -->
+            <div id="main">
+                {% if children %} {% for item in children %}
+                <article class="thumb">
+                    {% if item.category == "album" %}
+                    <a href="{{item.path}}" class="link">
+                        <img
+                            src="{% if item.thumbnail_url %}{{item.thumbnail_url}}{% else %}{{item.url}}{% endif %}"
+                            alt=""
+                        />
+                    </a>
+                    {% else %}
+                    <a href="{{item.url}}" class="image">
+                        <img
+                            src="{% if item.thumbnail_url %}{{item.thumbnail_url}}{% else %}{{item.url}}{% endif %}"
+                            alt=""
+                        />
+                        {% if item.exif %} {% if item.exif.parsed %}
+                        <span class="exif-wrapper">
+                            {% if item.exif.focal %}
+                            <span class="exif-item">
+                                <img
+                                    class="exif-icon"
+                                    src="http://s2.idinr.com/focus.png"
+                                />
+                                <span class="exif-text"
+                                    >{{item.exif.focal}}</span
+                                >
+                            </span>
+                            {% endif %} {% if item.exif.iso %}
+                            <span class="exif-item">
+                                <img
+                                    class="exif-icon"
+                                    src="http://s2.idinr.com/iso.png"
+                                />
+                                <span class="exif-text">{{item.exif.iso}}</span>
+                            </span>
+                            {% endif %} {% if item.exif.shutter %}
+                            <span class="exif-item">
+                                <img
+                                    class="exif-icon"
+                                    src="http://s2.idinr.com/shutter.png"
+                                />
+                                <span class="exif-text"
+                                    >{{item.exif.shutter}}</span
+                                >
+                            </span>
+                            {% endif %} {% if item.exif.aperture %}
+                            <span class="exif-item">
+                                <img
+                                    class="exif-icon"
+                                    src="http://s2.idinr.com/timer.png"
+                                />
+                                <span class="exif-text"
+                                    >{{item.exif.aperture}}sec.</span
+                                >
+                            </span>
+                            {% endif %}
+                        </span>
+                        {% endif %} {% endif %}
+                    </a>
+                    {% endif %} {% if item.title %}
+                    <h2>
+                        {% if item.category == "album" %}
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="18"
+                            height="18"
+                            fill="currentColor"
+                            viewBox="0 0 16 16"
+                        >
+                            <path
+                                d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"
+                            />
+                            <path
+                                d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"
+                            />
+                        </svg>
+                        {% endif %} {{item.title}}
+                    </h2>
+                    {% endif %} {% if item.description %}
+                    <p>{{item.description}}</p>
+                    {% endif %}
+                </article>
+                {% endfor %} {% endif %}
+            </div>
 
-					
-					<!-- Album Header for Album Pages -->
-					{% if not author and title %}
-					<div class="album-header">
-						<a href="/" class="home-button" title="Back to Home">
-							<i class="fas fa-arrow-left"></i>
-						</a>
-						<div class="album-title">{{title}}</div>
-					</div>
-					{% endif %}
+            <!-- Footer -->
+            <!-- <footer id="footer" class="panel">
+                        <div class="inner split">
+                            <div>
+                                <section>
+                                    <h2>Magna feugiat sed adipiscing</h2>
+                                    <p>Nulla consequat, ex ut suscipit rutrum, mi dolor tincidunt erat, et scelerisque turpis ipsum eget quis orci mattis aliquet. Maecenas fringilla et ante at lorem et ipsum. Dolor nulla eu bibendum sapien. Donec non pharetra dui. Nulla consequat, ex ut suscipit rutrum, mi dolor tincidunt erat, et scelerisque turpis ipsum.</p>
+                                </section>
+                                <section>
+                                    <h2>Follow me on ...</h2>
+                                    <ul class="icons">
+                                        <li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
+                                        <li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
+                                        <li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
+                                        <li><a href="#" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
+                                        <li><a href="#" class="icon brands fa-dribbble"><span class="label">Dribbble</span></a></li>
+                                        <li><a href="#" class="icon brands fa-linkedin-in"><span class="label">LinkedIn</span></a></li>
+                                    </ul>
+                                </section>
+                                <p class="copyright">
+                                    &copy; Unttled. Design: <a href="http://html5up.net">HTML5 UP</a>.
+                                </p>
+                            </div>
+                            <div>
+                                <section>
+                                    <h2>Get in touch</h2>
+                                    <form method="post" action="#">
+                                        <div class="fields">
+                                            <div class="field half">
+                                                <input type="text" name="name" id="name" placeholder="Name" />
+                                            </div>
+                                            <div class="field half">
+                                                <input type="text" name="email" id="email" placeholder="Email" />
+                                            </div>
+                                            <div class="field">
+                                                <textarea name="message" id="message" rows="4" placeholder="Message"></textarea>
+                                            </div>
+                                        </div>
+                                        <ul class="actions">
+                                            <li><input type="submit" value="Send" class="primary" /></li>
+                                            <li><input type="reset" value="Reset" /></li>
+                                        </ul>
+                                    </form>
+                                </section>
+                            </div>
+                        </div>
+                    </footer> -->
+        </div>
 
-				<!-- Main -->
-					<div id="main">
-						{% if children %}
-							{% for item in children %}
-							<article class="thumb">
-								{% if item.category == "album" %}
-									<a href="{{item.path}}" class="link">
-										<img src="{% if item.thumbnail_url %}{{item.thumbnail_url}}{% else %}{{item.url}}{% endif %}" alt="" loading="lazy" />
-									</a>
-								{% else %}
-									<a href="{{item.url}}" class="image">
-										<img src="{% if item.thumbnail_url %}{{item.thumbnail_url}}{% else %}{{item.url}}{% endif %}" alt="" loading="lazy" />
-                                        {% if item.exif %}
-                                            {% if item.exif.parsed %}
-                                                <span class="exif-wrapper">
-                                                    {% if item.exif.focal %}
-                                                    <span class="exif-item">
-                                                        <img class="exif-icon" src="http://s2.idinr.com/focus.png">
-                                                        <span class="exif-text">{{item.exif.focal}}</span>
-                                                    </span>
-                                                    {% endif %}
-                                                    {% if item.exif.iso %}
-                                                        <span class="exif-item">
-                                                            <img class="exif-icon" src="http://s2.idinr.com/iso.png">
-                                                            <span class="exif-text">{{item.exif.iso}}</span>
-                                                        </span>
-                                                    {% endif %}
-                                                    {% if item.exif.shutter %}
-                                                    <span class="exif-item">
-                                                        <img class="exif-icon" src="http://s2.idinr.com/shutter.png">
-                                                        <span class="exif-text">{{item.exif.shutter}}</span>
-                                                    </span>
-                                                    {% endif %}
-                                                    {% if item.exif.aperture %}
-                                                    <span class="exif-item">
-                                                        <img class="exif-icon" src="http://s2.idinr.com/timer.png">
-                                                        <span class="exif-text">{{item.exif.aperture}}sec.</span>
-                                                    </span>
-                                                    {% endif %}
-                                                </span>
-                                            {% endif %}
-                                        {% endif %}
-									</a>
-								{% endif %}
-								{% if item.title %}
-									<h2>
-										{% if item.category == "album" %}
-										  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-											<path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
-											<path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
-										  </svg>
-										{% endif %}
-										{{item.title}}
-									</h2>
-								{% endif %}
-								{% if item.description %}
-									<p>{{item.description}}</p>
-								{% endif %}
-								
-							</article>
-							{% endfor %}
-						{% endif %}
-					</div>
+        <!-- Theme Toggle Button -->
+        <button class="theme-toggle" title="Toggle Dark Mode">
+            <i class="fas fa-moon"></i>
+        </button>
 
-				<!-- Footer -->
-					<!-- <footer id="footer" class="panel">
-						<div class="inner split">
-							<div>
-								<section>
-									<h2>Magna feugiat sed adipiscing</h2>
-									<p>Nulla consequat, ex ut suscipit rutrum, mi dolor tincidunt erat, et scelerisque turpis ipsum eget quis orci mattis aliquet. Maecenas fringilla et ante at lorem et ipsum. Dolor nulla eu bibendum sapien. Donec non pharetra dui. Nulla consequat, ex ut suscipit rutrum, mi dolor tincidunt erat, et scelerisque turpis ipsum.</p>
-								</section>
-								<section>
-									<h2>Follow me on ...</h2>
-									<ul class="icons">
-										<li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
-										<li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
-										<li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
-										<li><a href="#" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
-										<li><a href="#" class="icon brands fa-dribbble"><span class="label">Dribbble</span></a></li>
-										<li><a href="#" class="icon brands fa-linkedin-in"><span class="label">LinkedIn</span></a></li>
-									</ul>
-								</section>
-								<p class="copyright">
-									&copy; Unttled. Design: <a href="http://html5up.net">HTML5 UP</a>.
-								</p>
-							</div>
-							<div>
-								<section>
-									<h2>Get in touch</h2>
-									<form method="post" action="#">
-										<div class="fields">
-											<div class="field half">
-												<input type="text" name="name" id="name" placeholder="Name" />
-											</div>
-											<div class="field half">
-												<input type="text" name="email" id="email" placeholder="Email" />
-											</div>
-											<div class="field">
-												<textarea name="message" id="message" rows="4" placeholder="Message"></textarea>
-											</div>
-										</div>
-										<ul class="actions">
-											<li><input type="submit" value="Send" class="primary" /></li>
-											<li><input type="reset" value="Reset" /></li>
-										</ul>
-									</form>
-								</section>
-							</div>
-						</div>
-					</footer> -->
+        <!-- GitHub Button -->
+        <a
+            href="https://github.com/Shell32-Natsu/photography-blog"
+            class="github-button"
+            title="View on GitHub"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            <i class="fab fa-github"></i>
+        </a>
 
-			</div>
-			
-			<!-- Theme Toggle Button -->
-			<button class="theme-toggle" title="Toggle Dark Mode">
-				<i class="fas fa-moon"></i>
-			</button>
-			
-			<!-- GitHub Button -->
-			<a href="https://github.com/Shell32-Natsu/photography-blog" class="github-button" title="View on GitHub" target="_blank" rel="noopener noreferrer">
-				<i class="fab fa-github"></i>
-			</a>
-			
-			<!-- About Me Button -->
-			<a href="https://blog.xiadong.info/about" class="about-button" title="About Me">
-				<i class="fas fa-info"></i>
-			</a>
+        <!-- About Me Button -->
+        <a
+            href="https://blog.xiadong.info/about"
+            class="about-button"
+            title="About Me"
+        >
+            <i class="fas fa-info"></i>
+        </a>
 
-		<!-- Scripts -->
-			<script src="/assets/js/jquery.min.js"></script>
-			<script src="/assets/js/jquery.poptrox.min.js"></script>
-			<script src="/assets/js/browser.min.js"></script>
-			<script src="/assets/js/breakpoints.min.js"></script>
-			<script src="/assets/js/util.js"></script>
-			<script src="/assets/js/main.js"></script>
-			
-			<script>
-				// Dark Mode Toggle
-				(function() {
-					var themeToggle = document.querySelector('.theme-toggle');
-					var body = document.body;
-					var icon = themeToggle.querySelector('i');
-					
-					// Check for saved theme preference or default to light
-					var currentTheme = localStorage.getItem('theme') || 'light';
-					
-					// Apply saved theme on load
-					if (currentTheme === 'dark') {
-						body.classList.add('dark-mode');
-						icon.classList.remove('fa-moon');
-						icon.classList.add('fa-sun');
-					}
-					
-					// Toggle theme on button click
-					themeToggle.addEventListener('click', function() {
-						body.classList.toggle('dark-mode');
-						
-						// Update icon
-						if (body.classList.contains('dark-mode')) {
-							icon.classList.remove('fa-moon');
-							icon.classList.add('fa-sun');
-							localStorage.setItem('theme', 'dark');
-						} else {
-							icon.classList.remove('fa-sun');
-							icon.classList.add('fa-moon');
-							localStorage.setItem('theme', 'light');
-						}
-					});
-				})();
-			</script>
+        <!-- Scripts -->
+        <script src="/assets/js/jquery.min.js"></script>
+        <script src="/assets/js/jquery.poptrox.min.js"></script>
+        <script src="/assets/js/browser.min.js"></script>
+        <script src="/assets/js/breakpoints.min.js"></script>
+        <script src="/assets/js/util.js"></script>
+        <script src="/assets/js/main.js"></script>
 
-	</body>
+        <script>
+            // Dark Mode Toggle
+            (function () {
+                var themeToggle = document.querySelector(".theme-toggle");
+                var body = document.body;
+                var icon = themeToggle.querySelector("i");
+
+                // Check for saved theme preference or default to light
+                var currentTheme = localStorage.getItem("theme") || "light";
+
+                // Apply saved theme on load
+                if (currentTheme === "dark") {
+                    body.classList.add("dark-mode");
+                    icon.classList.remove("fa-moon");
+                    icon.classList.add("fa-sun");
+                }
+
+                // Toggle theme on button click
+                themeToggle.addEventListener("click", function () {
+                    body.classList.toggle("dark-mode");
+
+                    // Update icon
+                    if (body.classList.contains("dark-mode")) {
+                        icon.classList.remove("fa-moon");
+                        icon.classList.add("fa-sun");
+                        localStorage.setItem("theme", "dark");
+                    } else {
+                        icon.classList.remove("fa-sun");
+                        icon.classList.add("fa-moon");
+                        localStorage.setItem("theme", "light");
+                    }
+                });
+            })();
+        </script>
+    </body>
 </html>
