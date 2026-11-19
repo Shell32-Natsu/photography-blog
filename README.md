@@ -86,7 +86,7 @@ python3 -m http.server -d public 8000
 
 ## 更新照片
 
-`scripts/` 里的脚本管理 Cloudflare R2 上的照片（需要 `CLOUDFLARE_*` 环境变量，见 `scripts/metadata-editor/config/r2.go`），都在 `scripts/` 目录下运行：
+`scripts/` 里的脚本管理 Cloudflare R2 上的照片（需要 `CLOUDFLARE_*` 环境变量，见 `scripts/metadata-editor/config/r2.go`），都在 `scripts/` 目录下运行。`scripts/metadata-editor` 是独立的 Go 模块，需要 Go 1.24 或更新版本，只依赖 AWS SDK：
 
 | 脚本 | 作用 |
 | --- | --- |

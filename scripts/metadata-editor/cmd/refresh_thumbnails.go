@@ -12,7 +12,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/disintegration/imaging"
 )
 
 // Refresh generates thumbnails for photos in the main bucket that have none.
@@ -166,32 +165,6 @@ func processThumbnail(ctx context.Context, key string) error {
 	}
 
 	return nil
-}
-
-// createThumbnail generates a thumbnail from image data
-func createThumbnail(imgData []byte) ([]byte, error) {
-	// Read the image, turning it upright if the camera recorded a rotation:
-	// the thumbnail carries no EXIF data, so its pixels must be the right way up
-	src, err := imaging.Decode(bytes.NewReader(imgData), imaging.AutoOrientation(true))
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode image: %w", err)
-	}
-
-	// Resize to a thumbnail (max width 300px)
-	maxWidth := 1024
-	maxHeight := 1024
-
-	// Resize the image preserving aspect ratio
-	dstImg := imaging.Fit(src, maxWidth, maxHeight, imaging.Lanczos)
-
-	// Encode the thumbnail
-	var buf bytes.Buffer
-	err = imaging.Encode(&buf, dstImg, imaging.JPEG, imaging.JPEGQuality(85))
-	if err != nil {
-		return nil, fmt.Errorf("failed to encode thumbnail: %w", err)
-	}
-
-	return buf.Bytes(), nil
 }
 
 // isImageFile checks if a file has an image extension
