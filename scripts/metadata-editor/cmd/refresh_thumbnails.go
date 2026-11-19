@@ -15,8 +15,10 @@ import (
 	"github.com/disintegration/imaging"
 )
 
-// Refresh regenerates thumbnails for photos in the main bucket
-func Refresh() {
+// Refresh generates thumbnails for photos in the main bucket that have none.
+// With force, thumbnails that already exist are generated again; with keys,
+// only those photos are (re)generated.
+func Refresh(force bool, keys []string) {
 	ctx := context.Background()
 	// Initialize the Cloudflare R2 client
 	config.InitR2Client(ctx)
@@ -31,10 +33,19 @@ func Refresh() {
 
 	thumbnailsToCreate := []string{}
 
-	// Compare the two sets of keys
-	for key := range objKeys {
-		if _, ok := thumbnailObjKeys[key]; !ok {
-			thumbnailsToCreate = append(thumbnailsToCreate, key)
+	if len(keys) > 0 {
+		for _, key := range keys {
+			if !objKeys[key] {
+				log.Fatalf("No such photo in the main bucket: %s", key)
+			}
+		}
+		thumbnailsToCreate = keys
+	} else {
+		// Compare the two sets of keys
+		for key := range objKeys {
+			if _, ok := thumbnailObjKeys[key]; !ok || force {
+				thumbnailsToCreate = append(thumbnailsToCreate, key)
+			}
 		}
 	}
 	log.Printf("Found %d thumbnails to create.", len(thumbnailsToCreate))
@@ -159,8 +170,9 @@ func processThumbnail(ctx context.Context, key string) error {
 
 // createThumbnail generates a thumbnail from image data
 func createThumbnail(imgData []byte) ([]byte, error) {
-	// Read the image
-	src, err := imaging.Decode(bytes.NewReader(imgData))
+	// Read the image, turning it upright if the camera recorded a rotation:
+	// the thumbnail carries no EXIF data, so its pixels must be the right way up
+	src, err := imaging.Decode(bytes.NewReader(imgData), imaging.AutoOrientation(true))
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode image: %w", err)
 	}

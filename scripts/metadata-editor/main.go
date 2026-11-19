@@ -47,10 +47,12 @@ func main() {
 
 	case "refresh":
 		refreshCmd := flag.NewFlagSet("refresh", flag.ExitOnError)
+		force := refreshCmd.Bool("force", false, "Regenerate thumbnails that already exist")
 		refreshCmd.Parse(os.Args[2:])
-		
-		// Run the refresh command to generate thumbnails
-		subcmd.Refresh()
+
+		// Run the refresh command to generate thumbnails; any further
+		// arguments are the keys of the only photos to (re)generate
+		subcmd.Refresh(*force, refreshCmd.Args())
 
 	default:
 		fmt.Printf("Unknown command: %s\n", cmd)
