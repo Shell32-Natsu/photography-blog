@@ -1,9 +1,10 @@
 name: Deploy admin
 
 # Tests the admin Worker and deploys it to Cloudflare whenever admin/ changes
-# on master. Needs two repository secrets:
-#   CLOUDFLARE_API_TOKEN   an API token made from the "Edit Cloudflare Workers" template
-#   CLOUDFLARE_ACCOUNT_ID  the account to deploy to
+# on master. Repository secrets:
+#   CLOUDFLARE_API_TOKEN   required: an API token made from the "Edit Cloudflare
+#                          Workers" template
+#   CLOUDFLARE_ACCOUNT_ID  only needed if the token can see more than one account
 
 on:
   push:

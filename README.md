@@ -97,12 +97,12 @@ python3 -m http.server -d public 8000
 
 后台由 GitHub Actions 自动部署：`admin/` 有改动并推送到 `master` 时，`.github/workflows/admin.yml` 会先跑类型检查和测试，再执行 `wrangler deploy`。也可以在 Actions 页面手动运行这个工作流。
 
-需要在仓库的 **Settings** → **Secrets and variables** → **Actions** 里添加两个 secret：
+需要在仓库的 **Settings** → **Secrets and variables** → **Actions** 里添加 secret：
 
 | Secret | 内容 |
 | --- | --- |
-| `CLOUDFLARE_API_TOKEN` | Cloudflare 的 API token，用 **Edit Cloudflare Workers** 模板创建，范围限定到自己的账号 |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare 的账号 ID |
+| `CLOUDFLARE_API_TOKEN` | 必需。Cloudflare 的 API token，用 **Edit Cloudflare Workers** 模板创建，范围限定到自己的账号 |
+| `CLOUDFLARE_ACCOUNT_ID` | 只有当这个 token 能看到不止一个账号时才需要：要部署到的账号 ID |
 
 第一次部署之后，还要做两件事：
 
