@@ -7,10 +7,8 @@ import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { after, afterEach, before, beforeEach, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { createTestHarness } from "wrangler";
+import { createTestHarness, experimental_readRawConfig } from "wrangler";
 
-const TOKEN = "correct-horse-battery-staple";
-const AUTH = { Authorization: "Basic " + Buffer.from("anyone:" + TOKEN).toString("base64") };
 const JPEG = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(2000, 7)]);
 const REPO = "Shell32-Natsu/photography-blog";
 
@@ -62,18 +60,27 @@ const github = {
 
 await github.start();
 
-const worker = (secrets) => ({
-	configPath: "./wrangler.jsonc",
-	vars: { GITHUB_API_URL: github.url, GITHUB_RAW_URL: github.url },
-	secrets,
+// The Worker as configured, but with GitHub replaced by the stand-in. Being
+// signed in through Cloudflare Access is simulated the way `wrangler dev`
+// does it; `signedIn: false` is a request that did not come through Access.
+const root = fileURLToPath(new URL("..", import.meta.url));
+const { access: _dev, ...configured } = experimental_readRawConfig({ config: root + "wrangler.jsonc" }).rawConfig;
+const worker = ({ signedIn = true, githubToken = "github-token" } = {}) => ({
+	config: {
+		...configured,
+		...(signedIn ? { access: { dev: { aud: "test", identity: { email: "me@example.com" } } } } : {}),
+		vars: {
+			...configured.vars,
+			GITHUB_API_URL: github.url,
+			GITHUB_RAW_URL: github.url,
+			...(githubToken ? { GITHUB_TOKEN: githubToken } : {}),
+		},
+	},
 });
-const server = createTestHarness({
-	root: fileURLToPath(new URL("..", import.meta.url)),
-	workers: [worker({ ADMIN_TOKEN: TOKEN, GITHUB_TOKEN: "github-token" })],
-});
+const server = createTestHarness({ root, workers: [worker()] });
 
 let env;
-const call = (path, init = {}) => server.fetch(path, { ...init, headers: { ...AUTH, ...init.headers } });
+const call = (path, init) => server.fetch(path, init);
 const setTags = (key, tags) =>
 	call(`/api/tags?key=${encodeURIComponent(key)}`, { method: "PUT", body: JSON.stringify({ tags }) });
 const photos = async () => (await (await call("/api/photos")).json()).photos;
@@ -88,7 +95,7 @@ beforeEach(async () => {
 	env = await server.getWorker().getEnv();
 });
 afterEach(async () => {
-	await server.reset(); // empties the buckets and restores the secrets
+	await server.reset(); // empties the buckets and restores the configuration
 });
 after(async () => {
 	await server.close();
@@ -96,36 +103,39 @@ after(async () => {
 });
 
 describe("signing in", () => {
-	test("nothing is served without the token, pages included", async () => {
-		for (const path of ["/", "/app.js", "/api/photos"]) {
-			const response = await server.fetch(path);
-			assert.equal(response.status, 401, path);
-			assert.match(response.headers.get("WWW-Authenticate"), /^Basic /);
+	test("nothing is served to a request that did not come through Access, pages included", async () => {
+		await server.update({ workers: [worker({ signedIn: false })] });
+		for (const path of ["/", "/app.js", "/api/photos", "/api/config"]) {
+			const response = await call(path);
+			assert.equal(response.status, 403, path);
+			assert.match(await response.text(), /Cloudflare Access/);
 		}
-		const wrong = { Authorization: "Basic " + Buffer.from("anyone:not-the-token").toString("base64") };
-		assert.equal((await server.fetch("/api/photos", { headers: wrong })).status, 401);
-		assert.equal((await server.fetch("/api/photos", { headers: { Authorization: "Bearer " + TOKEN } })).status, 401);
+		const put = await call("/api/tags?key=a.jpg", { method: "PUT", body: JSON.stringify({ tags: ["x"] }) });
+		assert.equal(put.status, 403);
+		// a header anyone can send does not count as having signed in
+		const forged = { "Cf-Access-Jwt-Assertion": "eyJhbGciOiJub25lIn0.eyJlbWFpbCI6Im1lQGV4YW1wbGUuY29tIn0.", "Cf-Access-Authenticated-User-Email": "me@example.com" };
+		assert.equal((await call("/api/photos", { headers: forged })).status, 403);
 	});
 
-	test("the token opens pages and API", async () => {
+	test("someone signed in through Access gets the pages and the API", async () => {
 		const page = await call("/");
 		assert.equal(page.status, 200);
 		assert.match(page.headers.get("Content-Type"), /text\/html/);
 		assert.match(await page.text(), /<script src="\/app\.js"/);
-		assert.equal((await call("/api/photos")).status, 200);
-		assert.equal((await call("/api/nope")).status, 404);
-	});
-
-	test("a missing or short token closes everything rather than opening it", async () => {
-		for (const token of [undefined, "", "short"]) {
-			await server.update({ workers: [worker(token === undefined ? {} : { ADMIN_TOKEN: token })] });
-			const guess = { Authorization: "Basic " + Buffer.from("anyone:" + (token ?? "")).toString("base64") };
-			assert.equal((await server.fetch("/api/photos", { headers: guess })).status, 503);
-			assert.equal((await server.fetch("/", { headers: guess })).status, 503);
+		for (const [path, type] of [["/app.js", "text/javascript"], ["/thumbnail.js", "text/javascript"], ["/app.css", "text/css"]]) {
+			const response = await call(path);
+			assert.equal(response.status, 200, path);
+			assert.match(response.headers.get("Content-Type"), new RegExp(type), path);
+			assert.ok((await response.text()).length > 1000, path);
 		}
+		const body = await (await call("/api/photos")).json();
+		assert.equal(body.user, "me@example.com");
+		assert.equal((await call("/api/nope")).status, 404);
+		assert.equal((await call("/nope.html")).status, 404);
+		assert.equal((await call("/app.js", { method: "POST" })).status, 404);
 	});
 
-	test("other sites cannot change anything with the saved password", async () => {
+	test("other sites cannot change anything with the signed-in session", async () => {
 		await seed("a.jpg", "x");
 		const put = (headers) =>
 			call("/api/tags?key=a.jpg", { method: "PUT", body: JSON.stringify({ tags: ["y"] }), headers });
@@ -354,7 +364,7 @@ describe("publishing", () => {
 	});
 
 	test("without a GitHub token the file can be downloaded but not committed", async () => {
-		await server.update({ workers: [worker({ ADMIN_TOKEN: TOKEN })] });
+		await server.update({ workers: [worker({ githubToken: null })] });
 		env = await server.getWorker().getEnv();
 		github.file = JSON.stringify({ title: "博客", description: "", author: "", children: [] });
 		await seed("a.jpg", "x");

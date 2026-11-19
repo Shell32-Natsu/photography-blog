@@ -106,24 +106,23 @@ python3 -m http.server -d public 8000
      ```
 
    - 不在本地装任何东西：在 Cloudflare 控制台的 **Workers & Pages** 里选 **Create application** → **GitHub**，选中这个仓库，把 Root directory 设为 `admin`，然后 **Save and Deploy**。之后每次推送都会自动部署。Worker 的名字要和 `wrangler.jsonc` 里的 `name` 一致。
-3. 设置登录密码 `ADMIN_TOKEN`，至少 16 个字符。没有设置时，所有请求都会被拒绝（503）。
+3. 打开登录：在控制台进入 **Workers & Pages** → 这个 Worker → **Access**，选 **Protect this Worker behind Access**，范围选 **All traffic**，策略选 **Cloudflare account**（只有这个 Cloudflare 账号的成员能登录），然后 **Apply Access**。账号需要已经启用 Zero Trust。想接入别的身份提供商或者用更细的策略，可以到 Zero Trust 里编辑这个 Access 应用。
+4. 可选：设置 `GITHUB_TOKEN`，「发布」才能直接提交。用 GitHub 的 fine-grained token，只授权这个仓库，权限给 Contents 的 Read and write。不设置的话，可以点「下载 config.json」后自己提交。
 
    ```bash
-   npx wrangler secret put ADMIN_TOKEN
+   npx wrangler secret put GITHUB_TOKEN
    ```
 
    也可以在控制台里 Worker 的 **Settings** → **Variables and Secrets** 添加，类型选 Secret。
-4. 可选：设置 `GITHUB_TOKEN`，「发布」才能直接提交。用 GitHub 的 fine-grained token，只授权这个仓库，权限给 Contents 的 Read and write。不设置的话，可以点「下载 config.json」后自己提交。
-5. 打开 Worker 的地址，用户名随意，密码填 `ADMIN_TOKEN`。
+5. 打开 Worker 的地址，会先跳到 Cloudflare 的登录页。
 
-页面和接口都在这个密码后面；改动数据的请求还必须来自后台自己的页面。想要更强的登录方式，可以在这个域名前再加一层 Cloudflare Access。
+登录完全交给 Cloudflare Access，Worker 自己不存任何密码：只有经过 Access 的请求才会被处理，页面也一样。没有为这个 Worker 开启 Access 时，所有请求都会被拒绝（403）。此外，改动数据的请求必须来自后台自己的页面。
 
 ### 本地运行和测试
 
 ```bash
 cd admin
-echo 'ADMIN_TOKEN=local-development-token' > .dev.vars
-npm run dev    # 用本地模拟的空 bucket
+npm run dev    # 用本地模拟的空 bucket，并模拟一个已登录的用户
 npm test       # 在本地的 Workers 运行时里跑集成测试
 ```
 
@@ -170,7 +169,7 @@ internal/photo       读取照片尺寸和 EXIF，以及 photos.json 缓存
 internal/site        把配置变成页面并写出
 admin/               管理后台（Cloudflare Worker，TypeScript）
   src/               接口：照片与标签、缩略图、生成并发布 config.json
-  public/            页面，以及在浏览器里生成缩略图的脚本
+  pages/             页面，以及在浏览器里生成缩略图的脚本
 ```
 
 ```bash

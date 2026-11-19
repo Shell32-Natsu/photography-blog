@@ -71,7 +71,7 @@ a { color: inherit; }
 .button-primary:hover { background: var(--acc); filter: brightness(1.1); }
 .button-primary:disabled { border-color: var(--line); background: var(--panel); filter: none; font-weight: 400; }
 
-.label, .hint, .pick span, .card-name, .status {
+.label, .hint, .pick span, .card-name, .status, .user {
 	font-family: var(--mono);
 	font-size: 11px;
 	letter-spacing: .06em;
@@ -96,6 +96,7 @@ a { color: inherit; }
 }
 
 .bar-name { margin-right: 8px; font-size: 15px; }
+.user { margin-left: 4px; color: var(--mut); letter-spacing: 0; }
 .bar-gap { flex: 1; }
 #search { width: min(240px, 100%); }
 

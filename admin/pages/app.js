@@ -23,6 +23,7 @@ const state = {
 	repository: "",
 	branch: "",
 	canPublish: false,
+	user: null, // the address of whoever signed in through Cloudflare Access
 };
 
 const cards = new Map(); // key → the card on the page
@@ -164,6 +165,9 @@ function renderBar() {
 	const publish = $("#publish");
 	publish.disabled = !state.canPublish;
 	publish.title = state.canPublish ? `提交 config.json 到 ${state.repository} 的 ${state.branch} 分支` : "还没有设置 GITHUB_TOKEN，可以先下载 config.json 手动提交";
+
+	$("#user").hidden = !state.user;
+	$("#user-name").textContent = state.user ?? "";
 
 	$("#bulk").hidden = !state.selected.size;
 	$("#bulk-count").textContent = `已选 ${state.selected.size} 张`;

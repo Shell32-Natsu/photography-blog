@@ -1,11 +1,14 @@
 // The admin for the photography blog: tag the photos in R2, make their
 // thumbnails, and publish the albums that the tags describe.
 
+import styles from "../pages/app.css";
+import script from "../pages/app.js";
+import page from "../pages/index.html";
+import thumbnailer from "../pages/thumbnail.js";
 import { listPhotos, original, putThumbnail, setTags } from "./photos";
 import { draft, publish } from "./publish";
 
 export interface Env {
-	ASSETS: Fetcher;
 	/** Original photos. */
 	PHOTOS: R2Bucket;
 	/** Thumbnails, under the same keys as the originals. */
@@ -18,8 +21,6 @@ export interface Env {
 	GITHUB_BRANCH: string;
 	GITHUB_API_URL?: string;
 	GITHUB_RAW_URL?: string;
-	/** Secret: the password for everything served here. */
-	ADMIN_TOKEN?: string;
 	/** Secret: lets "publish" commit config.json. Without it the file can only be downloaded. */
 	GITHUB_TOKEN?: string;
 }
@@ -34,11 +35,18 @@ export class HttpError extends Error {
 	}
 }
 
+const PAGES: Record<string, [body: string, type: string]> = {
+	"/": [page, "text/html; charset=utf-8"],
+	"/app.css": [styles, "text/css; charset=utf-8"],
+	"/app.js": [script, "text/javascript; charset=utf-8"],
+	"/thumbnail.js": [thumbnailer, "text/javascript; charset=utf-8"],
+};
+
 export default {
-	async fetch(request, env): Promise<Response> {
+	async fetch(request, env, ctx): Promise<Response> {
 		let response: Response;
 		try {
-			response = (await refuse(request, env)) ?? (await route(request, env));
+			response = refuse(request, ctx) ?? (await route(request, env, ctx));
 		} catch (err) {
 			if (!(err instanceof HttpError)) console.error(err);
 			response =
@@ -50,7 +58,40 @@ export default {
 	},
 } satisfies ExportedHandler<Env>;
 
-async function route(request: Request, env: Env): Promise<Response> {
+/**
+ * Decides whether a request may go ahead. Signing in is left to Cloudflare
+ * Access, which sits in front of the Worker; the runtime vouches for a
+ * request that came through it by setting `ctx.access`. Anything else is
+ * turned away, pages included: if Access is not switched on for this Worker,
+ * nobody gets in.
+ */
+function refuse(request: Request, ctx: ExecutionContext): Response | null {
+	if (!ctx.access) {
+		return new Response("这个后台需要通过 Cloudflare Access 登录；请确认已经为这个 Worker 开启 Access。", {
+			status: 403,
+			headers: { "Content-Type": "text/plain; charset=utf-8" },
+		});
+	}
+	// The browser attaches the session to requests that other sites make to
+	// this one, so anything that changes data must come from our own pages.
+	if (request.method !== "GET" && request.method !== "HEAD" && !fromOwnPage(request)) {
+		return new Response("不接受来自其他网站的请求。", {
+			status: 403,
+			headers: { "Content-Type": "text/plain; charset=utf-8" },
+		});
+	}
+	return null;
+}
+
+function fromOwnPage(request: Request): boolean {
+	const site = request.headers.get("Sec-Fetch-Site");
+	if (site) return site === "same-origin";
+	// Not a browser new enough to say, or not a browser at all.
+	const origin = request.headers.get("Origin");
+	return !origin || origin === new URL(request.url).origin;
+}
+
+async function route(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
 	const url = new URL(request.url);
 	const key = () => {
 		const key = url.searchParams.get("key");
@@ -59,15 +100,18 @@ async function route(request: Request, env: Env): Promise<Response> {
 	};
 
 	switch (`${request.method} ${url.pathname}`) {
-		case "GET /api/photos":
+		case "GET /api/photos": {
+			const [photos, identity] = await Promise.all([listPhotos(env), ctx.access?.getIdentity()]);
 			return json({
-				photos: await listPhotos(env),
+				photos,
 				photoBase: env.PHOTO_BASE_URL,
 				thumbBase: env.THUMB_BASE_URL,
 				repository: env.GITHUB_REPO,
 				branch: env.GITHUB_BRANCH,
 				canPublish: Boolean(env.GITHUB_TOKEN),
+				user: identity?.email ?? null,
 			});
+		}
 		case "PUT /api/tags": {
 			const body = (await request.json().catch(() => null)) as { tags?: unknown } | null;
 			return json({ key: key(), tags: await setTags(env, key(), body?.tags) });
@@ -87,66 +131,15 @@ async function route(request: Request, env: Env): Promise<Response> {
 			return json(await publish(env));
 	}
 
-	if (url.pathname.startsWith("/api/")) throw new HttpError(404, "没有这个接口。");
-	return env.ASSETS.fetch(request);
-}
-
-/**
- * Decides whether a request may go ahead. Everything here, pages included,
- * needs the admin token as the password of HTTP Basic authentication; the
- * user name is ignored.
- */
-async function refuse(request: Request, env: Env): Promise<Response | null> {
-	const token = env.ADMIN_TOKEN ?? "";
-	if (token.length < 16) {
-		// Never fall back to being open.
-		return new Response("ADMIN_TOKEN 还没有设置，或者不足 16 个字符。", { status: 503 });
-	}
-
-	if (!(await sameText(password(request), token))) {
-		return new Response("请用 ADMIN_TOKEN 作为密码登录。", {
-			status: 401,
-			headers: { "WWW-Authenticate": 'Basic realm="Photo admin", charset="UTF-8"' },
+	const found = request.method === "GET" || request.method === "HEAD" ? PAGES[url.pathname] : undefined;
+	if (found) {
+		const [body, type] = found;
+		return new Response(request.method === "HEAD" ? null : body, {
+			headers: { "Content-Type": type, "Cache-Control": "no-cache" },
 		});
 	}
-
-	// The browser attaches the saved password to requests that other sites
-	// make to this one, so anything that changes data must come from our own
-	// pages.
-	if (request.method !== "GET" && request.method !== "HEAD" && !fromOwnPage(request)) {
-		return new Response("不接受来自其他网站的请求。", { status: 403 });
-	}
-	return null;
-}
-
-function password(request: Request): string {
-	const [scheme, value] = (request.headers.get("Authorization") ?? "").split(" ");
-	if (scheme?.toLowerCase() !== "basic" || !value) return "";
-	try {
-		const bytes = Uint8Array.from(atob(value), (c) => c.charCodeAt(0));
-		const credentials = new TextDecoder().decode(bytes);
-		return credentials.slice(credentials.indexOf(":") + 1);
-	} catch {
-		return "";
-	}
-}
-
-/** Compares two strings without revealing through timing where they differ. */
-async function sameText(a: string, b: string): Promise<boolean> {
-	const encoder = new TextEncoder();
-	const [x, y] = await Promise.all([
-		crypto.subtle.digest("SHA-256", encoder.encode(a)),
-		crypto.subtle.digest("SHA-256", encoder.encode(b)),
-	]);
-	return crypto.subtle.timingSafeEqual(x, y);
-}
-
-function fromOwnPage(request: Request): boolean {
-	const site = request.headers.get("Sec-Fetch-Site");
-	if (site) return site === "same-origin";
-	// Not a browser new enough to say, or not a browser at all.
-	const origin = request.headers.get("Origin");
-	return !origin || origin === new URL(request.url).origin;
+	if (url.pathname.startsWith("/api/")) throw new HttpError(404, "没有这个接口。");
+	return new Response("没有这个页面。", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8" } });
 }
 
 function harden(response: Response, env: Env): Response {
