@@ -4,16 +4,20 @@
 	"main": "src/index.ts",
 	"compatibility_date": "2026-11-01",
 
+	// Served at the Worker's workers.dev address; no separate preview addresses.
+	"workers_dev": true,
+	"preview_urls": false,
+
 	// The pages in pages/ are bundled into the Worker as text and served by it.
 	// (Cloudflare's separate static-assets hosting is not used: a Worker with
 	// static assets is not told who signed in through Access.)
 	"rules": [{ "type": "Text", "globs": ["**/pages/*"], "fallthrough": false }],
 
 	// The bucket holding the original photos, and the one holding thumbnails
-	// under the same keys. Put your own bucket names here.
+	// under the same keys.
 	"r2_buckets": [
-		{ "binding": "PHOTOS", "bucket_name": "your-photo-bucket" },
-		{ "binding": "THUMBS", "bucket_name": "your-thumbnail-bucket" }
+		{ "binding": "PHOTOS", "bucket_name": "photos" },
+		{ "binding": "THUMBS", "bucket_name": "photos-thumbnails" }
 	],
 
 	"vars": {

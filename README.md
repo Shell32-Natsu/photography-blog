@@ -95,26 +95,27 @@ python3 -m http.server -d public 8000
 
 ### 部署后台
 
-1. 在 `admin/wrangler.jsonc` 里把两个 `bucket_name` 改成原图和缩略图 bucket 的名字。
-2. 部署，两种方式任选：
-   - 本地（需要 Node 22 或更新版本）：
+后台由 GitHub Actions 自动部署：`admin/` 有改动并推送到 `master` 时，`.github/workflows/admin.yml` 会先跑类型检查和测试，再执行 `wrangler deploy`。也可以在 Actions 页面手动运行这个工作流。
 
-     ```bash
-     cd admin
-     npm ci
-     npx wrangler deploy
-     ```
+需要在仓库的 **Settings** → **Secrets and variables** → **Actions** 里添加两个 secret：
 
-   - 不在本地装任何东西：在 Cloudflare 控制台的 **Workers & Pages** 里选 **Create application** → **GitHub**，选中这个仓库，把 Root directory 设为 `admin`，然后 **Save and Deploy**。之后每次推送都会自动部署。Worker 的名字要和 `wrangler.jsonc` 里的 `name` 一致。
-3. 打开登录：在控制台进入 **Workers & Pages** → 这个 Worker → **Access**，选 **Protect this Worker behind Access**，范围选 **All traffic**，策略选 **Cloudflare account**（只有这个 Cloudflare 账号的成员能登录），然后 **Apply Access**。账号需要已经启用 Zero Trust。想接入别的身份提供商或者用更细的策略，可以到 Zero Trust 里编辑这个 Access 应用。
-4. 可选：设置 `GITHUB_TOKEN`，「发布」才能直接提交。用 GitHub 的 fine-grained token，只授权这个仓库，权限给 Contents 的 Read and write。不设置的话，可以点「下载 config.json」后自己提交。
+| Secret | 内容 |
+| --- | --- |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare 的 API token，用 **Edit Cloudflare Workers** 模板创建，范围限定到自己的账号 |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare 的账号 ID |
 
-   ```bash
-   npx wrangler secret put GITHUB_TOKEN
-   ```
+第一次部署之后，还要做两件事：
 
-   也可以在控制台里 Worker 的 **Settings** → **Variables and Secrets** 添加，类型选 Secret。
-5. 打开 Worker 的地址，会先跳到 Cloudflare 的登录页。
+1. 打开登录：在控制台进入 **Workers & Pages** → `photography-blog-admin` → **Access**，选 **Protect this Worker behind Access**，范围选 **All traffic**，策略选 **Cloudflare account**（只有这个 Cloudflare 账号的成员能登录），然后 **Apply Access**。账号需要已经启用 Zero Trust。想接入别的身份提供商或者用更细的策略，可以到 Zero Trust 里编辑这个 Access 应用。
+2. 可选：给 Worker 设置 `GITHUB_TOKEN`，「发布」才能直接提交。用 GitHub 的 fine-grained token，只授权这个仓库，权限给 Contents 的 Read and write。在控制台里 Worker 的 **Settings** → **Variables and Secrets** 添加，类型选 Secret；或者在本地运行 `npx wrangler secret put GITHUB_TOKEN`。不设置的话，可以点「下载 config.json」后自己提交。
+
+两个 bucket 的名字写在 `admin/wrangler.jsonc` 的 `r2_buckets` 里。想从本地部署的话（需要 Node 22 或更新版本）：
+
+```bash
+cd admin
+npm ci
+npx wrangler deploy
+```
 
 登录完全交给 Cloudflare Access，Worker 自己不存任何密码：只有经过 Access 的请求才会被处理，页面也一样。没有为这个 Worker 开启 Access 时，所有请求都会被拒绝（403）。此外，改动数据的请求必须来自后台自己的页面。
 
