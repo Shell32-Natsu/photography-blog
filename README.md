@@ -1,183 +1,154 @@
-# Personal Photography Blog Generator
-摄影类博客生成器
+# 摄影博客
 
-> The theme was originally made by HTML5 UP [Multiverse | HTML5 UP](https://html5up.net/multiverse)
+一个摄影博客的静态站点生成器和它的主题：读 `config.json` 里的相册与照片，生成纯静态页面。
 
+![首页](screenshots/home.jpg)
 
+| 相册页 | 灯箱 | 手机 |
+| --- | --- | --- |
+| ![相册页](screenshots/album.jpg) | ![灯箱](screenshots/lightbox.jpg) | ![手机](screenshots/mobile.jpg) |
 
-DEMO: http://i.idinr.com
+## 特点
 
- [**中文说明**](https://github.com/hangbale/photography-blog/wiki/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E)
+- **首页是一面拼贴墙**：竖构图的封面占竖格，横构图的每隔几张放大一格，生成时会自动调整，尽量不留空格。
+- **相册页是等高排版**：每张照片保持原始比例，同一行等高并撑满整行。排版是纯 CSS 的，尺寸在生成时就写进了页面，图片加载过程中页面不会跳动。
+- **灯箱**：缩略图原地放大进入；支持键盘 ← → / Esc、手机左右滑动和下拉关闭、浏览器返回键关闭；地址栏里带着照片名（如 `/Napa/#DSCF0336`），可以直接分享某一张。有 EXIF 的照片会显示机身、镜头、焦距、光圈、快门、ISO 和日期。
+- **按需加载原图**：先显示缩略图，只有当屏幕像素确实比缩略图多时才去取原图；省流量模式或 2G 网络下不自动取。
+- **转场**：从封面进入相册、打开灯箱、切换深浅色都有过渡动画，由浏览器的 View Transitions 完成；不支持的浏览器直接切换，功能不受影响。
+- **轻**：没有任何前端依赖和网络字体。全站一份 CSS（16 KB）、一份 JS（9 KB），gzip 后合计约 8 KB。
+- 深色 / 浅色两套配色，记住上次的选择；关闭 JavaScript 时照片照常显示，点击直接打开原图。
 
-## screenshots
+## 使用
 
-![](https://github.com/hangbale/photography-blog/blob/master/screenshots/pc.png?raw=true)   
-![](https://github.com/hangbale/photography-blog/blob/master/screenshots/mobile.png?raw=true)
+需要 Go 1.21 或更新版本。
 
-## Change Log
-### 2022-6-14
-- Show Image Exif Info
-### 2022-6-30
-- explain how to develop a theme
-### 2022-7-23
-- bug fix on windows
-
-
-## Features
-
-- Fully Responsive
-- HTML5 + CSS3
-- FontAwesome Icons
-- Multi-level Albums Support
-- Basic Breadcrumbs
-- Automated Image Fit
-- Easy Config With JSON
-- Faster
-- auto parse Exif data
-
-
-
-## Usage
-
-1. Download the executable file from release page, put it to your project directory.
-
-2. Create a file `config.json` in project directory.
-
-   config example:
-
-   ```json
-   {
-     "title": "My Blog",
-     "description": "My Blog description",
-     "author": "author name",
-     "children": [
-       {
-         "title": "a dog image",
-         "description": "description of this image",
-         "url": "a image url"
-       },
-       {
-         "title": "a image collection,",
-         "description": "description of this collection",
-         "url": "a thumbnail of this collection",
-         "children": [ // a collection must have children field
-           {
-             "url": "a image url"
-           }
-         ]
-       }
-     ]
-   }
-   ```
-
-   **note:**
-
-   - The root node will be used to generate home page.
-   - A image collection must have  **children** and **title** field.
-   - If a item is collection then  generate a page for it.
-   - A single image must have **url** field.
-
-3. Excute generator   
-
-   you should add executable permission first.
-   ```bash
-   cd project_dir
-   ./blog-cli
-   
-   ```
-   for windows: excute blog-cli.exe
-
-4. A `public` directory will be created, use it as your server root
-
-## Image and Exif
-There are two ways to store image: cdn or local.
-Only four Exif fields will be displayed:  
-
-- focal
-- iso
-- aperture
-- shutter
-
-### CDN (recommended)
-If you want show Exif of a image in cdn，you should the field：`extra` of its parent **collection node**.  
-
-A cdn url must start with http of https to distinguish from local image uri.
-
+```bash
+go run ./cmd/photoblog
 ```
-   "extra": {
-    "image_exif_query_suffix": "?exif",
-    "image_style_suffix": "$blog"
-  }
+
+站点生成在 `public/`，把它作为网站根目录即可。本地预览：
+
+```bash
+python3 -m http.server -d public 8000
 ```
-image_exif_query_suffix: to fetch url exif data from cdn api.
-image_style_suffix: if the cdn url has a image style suffix the replace it to get original url.
 
-**note**: I wrote this code because i use `qiniu(七牛云)`，I did not handle other cdn service because they are too many.
+可选参数：
 
-### local
-- create a directory named by `image`
-- put all your iamges in
-- specify the url field with prefix `/image`，because this mean the root of website
+| 参数 | 默认值 | 说明 |
+| --- | --- | --- |
+| `-config` | `config.json` | 相册与照片的配置 |
+| `-theme` | `template` | 主题目录 |
+| `-out` | `public` | 输出目录 |
+| `-images` | `image` | 本地照片目录，存在时原样复制到输出目录 |
+| `-meta` | `photos.json` | 照片尺寸与 EXIF 的缓存 |
+| `-offline` | | 不联网读取缓存里没有的照片 |
+| `-refresh` | | 忽略缓存，全部重新读取 |
 
-**A local image will be extracted Exif info automatically.**
+## 配置
 
-### Specify Exif manually
-```
+`config.json` 是一棵树：有 `children` 的节点是相册，只有 `url` 的节点是照片，根节点是站点本身。相册可以嵌套。
+
+```json
+{
+  "title": "我的摄影博客",
+  "description": "写给搜索引擎和分享卡片的简介",
+  "children": [
     {
-        "title": "title",
-        "url": "http://xx.com/ss.jpg",
-        "exif": {
-            "focal": "1",
-            "iso": "100",
-            "shutter": "1/1000",
-            "aperture": "1/1"
-        }
-    },
+      "title": "日本",
+      "url": "https://photo-r2.example.com/cover.jpg",
+      "children": [
+        { "url": "https://photo-r2.example.com/DSCF0001.jpg" },
+        { "url": "/image/local.jpg" }
+      ]
+    }
+  ]
+}
 ```
- ## Theme
-Because all the pages use a same html template currently, so a theme can only have one html file named `index.html`. 
-Other assets should be placed in a directory named `assets`
- ### development
- The template engine is `Tera`
- 
- **directory structure**
- `assets` and `index.html` are mandatory.
 
- - theme root
-   - assets  
-   - index.html
- 
- **available variables in template**
- - all the fields in `config.json`
- - item.exif // the EXIF info of image
-    - parsed true/false if local parse exif info successed
-    - focal 
-    - iso 
-    - shutter
-    - aperture
-- item.category album/none is a image collection
-- breadcrumbs // array of breadcrumb
-  - title // path title
-  - path // path url
-  - current true/false //is current path
+- 相册的 `url` 是封面，不写则用相册里的第一张。
+- 站点标题只出现在浏览器标签页和分享卡片里，页面上不显示。
+- 以 `http` 开头的是远程照片；其他的是本地照片，`/image/a.jpg` 对应仓库里的 `image/a.jpg`。
+- 地址里带 `photo-r2` 的照片，缩略图取自把它换成 `photo-thumbs-r2` 的地址（规则在 `internal/site/site.go` 的 `ThumbURL`）；其他照片直接用原图当缩略图。
+- 想手动指定某张照片的拍摄参数，可以给它加上 `exif`：
 
-## Development
+  ```json
+  { "url": "…", "exif": { "model": "X-S10", "focal": "35mm", "aperture": "ƒ/2", "shutter": "1/250s", "iso": "ISO 160" } }
+  ```
 
-It is a Rust Application.
+## 照片信息缓存
 
-### Dependencies
+生成时需要知道每张照片的尺寸（排版用）和 EXIF（灯箱里显示）。生成器只读每个文件开头的 128 KB，不会下载整张原图，结果存在 `photos.json` 里。
 
-- Rust Environment
-- Tera
-- Serde
-- Serde_json
-- Urlencoding
+- 缓存里已有的照片不会再联网，所以把 `photos.json` 一起提交，构建就很快。
+- 缓存里没有的照片会在构建时现查；CI 上也一样，只是结果不会写回仓库。
+- 读取失败的照片按 3:2 排版，不会让构建失败，下次构建会再试。
+- 如果缩略图没有按原图的 EXIF 方向旋转，构建时会给出警告。
 
-### Default Values
+## 更新照片
 
-Defined in ` src/config.rs`
+`scripts/` 里的脚本管理 Cloudflare R2 上的照片（需要 `CLOUDFLARE_*` 环境变量，见 `scripts/metadata-editor/config/r2.go`），都在 `scripts/` 目录下运行：
 
-### Template
-The default template is   `template/index.html` and be used by all the pages.
-Template Engine is Tera https://tera.netlify.app/docs/.
+| 脚本 | 作用 |
+| --- | --- |
+| `./run_server.sh` | 启动给照片打标签的本地网页 |
+| `./refresh_thumbs.sh` | 为还没有缩略图的照片生成缩略图 |
+| `./generate.sh` | 生成缩略图 → 按标签重新生成 `config.json` → 更新 `photos.json` 并在本地生成站点 |
 
+重新生成个别缩略图（例如方向不对的）：
+
+```bash
+cd scripts/metadata-editor
+go run . refresh DSCF0370.JPG DSCF0373.JPG
+```
+
+加 `-force` 则全部重新生成：`go run . refresh -force`。重新生成后用 `go run ./cmd/photoblog -refresh` 刷新 `photos.json`。
+
+## 部署
+
+推送到 `master` 后，GitHub Actions（`.github/workflows/go.yml`）会构建站点并发布到 `page` 分支。
+
+## 修改主题
+
+主题在 `template/` 下，一共四个文件：
+
+```
+template/
+  index.html      所有页面共用的模板（Go html/template）
+  favicon.svg
+  assets/app.css  样式；颜色和间距都是文件开头的变量
+  assets/app.js   主题切换和灯箱
+```
+
+除 `index.html` 外的文件会原样复制到输出目录。顶栏和页脚里的 About、GitHub 链接直接写在 `index.html` 里。
+
+模板拿到的是当前页面（`internal/site/site.go` 里的 `Album`）：
+
+| 字段 | 含义 |
+| --- | --- |
+| `.Home` `.NotFound` | 是否首页 / 404 页 |
+| `.Title` `.Description` `.Href` | 标题、简介、地址 |
+| `.Cover` | 封面照片 |
+| `.Count` `.Num` `.Of` | 照片数、在同级相册中的序号、同级相册总数 |
+| `.Crumbs` | 上级页面，`.Title` 和 `.Href` |
+| `.Albums` | 子相册，每个都是同样的结构，另有 `.Shape`（拼贴墙里的格子形状） |
+| `.Photos` | 照片：`.URL` `.Thumb` `.Name` `.N` `.W` `.H` `.Ratio` `.Info` |
+| `.Next` | 下一个同级相册 |
+| `.Site` | 全站信息：`.Title` `.Description` `.Albums` `.Photos` `.Year` `.Rev` |
+
+## 代码结构
+
+```
+cmd/photoblog        命令行入口
+internal/config      读取 config.json
+internal/photo       读取照片尺寸和 EXIF，以及 photos.json 缓存
+internal/site        把配置变成页面并写出
+scripts/             R2 上的照片管理工具（独立的 Go 模块）
+```
+
+```bash
+go test ./...
+```
+
+## 来源
+
+生成器最初 fork 自 [hangbale/photography-blog](https://github.com/hangbale/photography-blog)，MIT 许可。
