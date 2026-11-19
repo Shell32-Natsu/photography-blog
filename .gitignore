@@ -2,3 +2,9 @@
 **/**/.DS_Store
 /public
 /photoblog*
+
+# admin (Cloudflare Worker)
+/admin/node_modules
+/admin/.wrangler
+/admin/.dev.vars*
+/admin/worker-configuration.d.ts

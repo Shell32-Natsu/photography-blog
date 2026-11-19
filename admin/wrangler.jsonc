@@ -1,0 +1,36 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "photography-blog-admin",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-11-01",
+
+	// The pages in public/ are served through the Worker as well, so that they
+	// sit behind the same login as the API.
+	"assets": {
+		"directory": "./public",
+		"binding": "ASSETS",
+		"run_worker_first": true
+	},
+
+	// The bucket holding the original photos, and the one holding thumbnails
+	// under the same keys. Put your own bucket names here.
+	"r2_buckets": [
+		{ "binding": "PHOTOS", "bucket_name": "your-photo-bucket" },
+		{ "binding": "THUMBS", "bucket_name": "your-thumbnail-bucket" }
+	],
+
+	"vars": {
+		// Public addresses of the two buckets, as used in config.json.
+		"PHOTO_BASE_URL": "https://photo-r2.xiadong.info",
+		"THUMB_BASE_URL": "https://photo-thumbs-r2.xiadong.info",
+		// Where "publish" commits config.json.
+		"GITHUB_REPO": "Shell32-Natsu/photography-blog",
+		"GITHUB_BRANCH": "master"
+	},
+
+	// Secrets, set with `wrangler secret put <NAME>`:
+	//   ADMIN_TOKEN   required: the password for the admin pages (16+ characters)
+	//   GITHUB_TOKEN  optional: lets "publish" commit config.json to the repository
+
+	"observability": { "enabled": true }
+}

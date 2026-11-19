@@ -1,0 +1,15 @@
+{
+  "name": "photography-blog-admin",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "wrangler types --include-env=false && tsc --noEmit",
+    "test": "node --test \"test/*.test.mjs\""
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "wrangler": "4.157.0"
+  }
+}

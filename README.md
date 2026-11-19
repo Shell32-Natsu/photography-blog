@@ -83,25 +83,51 @@ python3 -m http.server -d public 8000
 - 缓存里没有的照片会在构建时现查；CI 上也一样，只是结果不会写回仓库。
 - 读取失败的照片按 3:2 排版，不会让构建失败，下次构建会再试。
 - 如果缩略图没有按原图的 EXIF 方向旋转，构建时会给出警告。
+- 换过缩略图之后，用 `go run ./cmd/photoblog -refresh` 重新读取全部照片。
 
-## 更新照片
+## 管理后台
 
-`scripts/` 里的脚本管理 Cloudflare R2 上的照片（需要 `CLOUDFLARE_*` 环境变量，见 `scripts/metadata-editor/config/r2.go`），都在 `scripts/` 目录下运行。`scripts/metadata-editor` 是独立的 Go 模块，需要 Go 1.24 或更新版本，只依赖 AWS SDK：
+`admin/` 是一个 Cloudflare Worker，用来给 R2 里的照片打标签、补缩略图、发布相册。它通过 R2 binding 直接读写两个 bucket，不需要 S3 密钥。
 
-| 脚本 | 作用 |
-| --- | --- |
-| `./run_server.sh` | 启动给照片打标签的本地网页 |
-| `./refresh_thumbs.sh` | 为还没有缩略图的照片生成缩略图 |
-| `./generate.sh` | 生成缩略图 → 按标签重新生成 `config.json` → 更新 `photos.json` 并在本地生成站点 |
+- **标签**：一个标签就是一个相册，存在照片对象的自定义元数据 `tag` 字段里，逗号分隔。可以在卡片上输入、从左侧拖到照片上，或者勾选多张后批量添加和移除。R2 不能原地修改元数据，所以每次改标签都会把那张照片原样重写一遍（流式转存，文件内容和其他元数据不变）。
+- **缩略图**：点「生成缩略图」，由浏览器取回原图、按 EXIF 转正、用 Lanczos 缩到最长边 1024、存成质量 85 的 JPEG，再传到缩略图 bucket 的同名 key。这一步放在浏览器里，是因为 Worker 的内存和 CPU 限额处理不了两千多万像素的原图。
+- **发布**：按当前标签生成 `config.json` 并提交到仓库，随后由 GitHub Actions 部署。站点标题、相册简介和封面沿用已发布的内容；新相册、或者封面照片已不在其中的相册，随机选一张做封面。内容没有变化时不会提交。
 
-重新生成个别缩略图（例如方向不对的）：
+### 部署后台
+
+1. 在 `admin/wrangler.jsonc` 里把两个 `bucket_name` 改成原图和缩略图 bucket 的名字。
+2. 部署，两种方式任选：
+   - 本地（需要 Node 22 或更新版本）：
+
+     ```bash
+     cd admin
+     npm ci
+     npx wrangler deploy
+     ```
+
+   - 不在本地装任何东西：在 Cloudflare 控制台的 **Workers & Pages** 里选 **Create application** → **GitHub**，选中这个仓库，把 Root directory 设为 `admin`，然后 **Save and Deploy**。之后每次推送都会自动部署。Worker 的名字要和 `wrangler.jsonc` 里的 `name` 一致。
+3. 设置登录密码 `ADMIN_TOKEN`，至少 16 个字符。没有设置时，所有请求都会被拒绝（503）。
+
+   ```bash
+   npx wrangler secret put ADMIN_TOKEN
+   ```
+
+   也可以在控制台里 Worker 的 **Settings** → **Variables and Secrets** 添加，类型选 Secret。
+4. 可选：设置 `GITHUB_TOKEN`，「发布」才能直接提交。用 GitHub 的 fine-grained token，只授权这个仓库，权限给 Contents 的 Read and write。不设置的话，可以点「下载 config.json」后自己提交。
+5. 打开 Worker 的地址，用户名随意，密码填 `ADMIN_TOKEN`。
+
+页面和接口都在这个密码后面；改动数据的请求还必须来自后台自己的页面。想要更强的登录方式，可以在这个域名前再加一层 Cloudflare Access。
+
+### 本地运行和测试
 
 ```bash
-cd scripts/metadata-editor
-go run . refresh DSCF0370.JPG DSCF0373.JPG
+cd admin
+echo 'ADMIN_TOKEN=local-development-token' > .dev.vars
+npm run dev    # 用本地模拟的空 bucket
+npm test       # 在本地的 Workers 运行时里跑集成测试
 ```
 
-加 `-force` 则全部重新生成：`go run . refresh -force`。重新生成后用 `go run ./cmd/photoblog -refresh` 刷新 `photos.json`。
+依赖只有 `wrangler` 和 `typescript` 两个开发工具，版本锁定在 `package-lock.json` 里。
 
 ## 部署
 
@@ -142,7 +168,9 @@ cmd/photoblog        命令行入口
 internal/config      读取 config.json
 internal/photo       读取照片尺寸和 EXIF，以及 photos.json 缓存
 internal/site        把配置变成页面并写出
-scripts/             R2 上的照片管理工具（独立的 Go 模块）
+admin/               管理后台（Cloudflare Worker，TypeScript）
+  src/               接口：照片与标签、缩略图、生成并发布 config.json
+  public/            页面，以及在浏览器里生成缩略图的脚本
 ```
 
 ```bash

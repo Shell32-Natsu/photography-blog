@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>照片管理</title>
+<link rel="stylesheet" href="/app.css">
+<script src="/app.js" type="module"></script>
+</head>
+<body>
+
+<header class="bar">
+<strong class="bar-name">照片管理</strong>
+<input id="search" class="field" type="search" placeholder="按文件名筛选" aria-label="按文件名筛选">
+<select id="sort" class="field" aria-label="排序">
+<option value="name">按文件名</option>
+<option value="new">最新上传在前</option>
+</select>
+<span class="bar-gap"></span>
+<button id="thumbs" class="button" type="button" hidden></button>
+<a id="download" class="button" href="/api/config" download="config.json">下载 config.json</a>
+<button id="publish" class="button button-primary" type="button">发布</button>
+</header>
+
+<div class="layout">
+<aside class="side">
+<ul id="views" class="list"></ul>
+<h2 class="label">标签 <span id="tag-count"></span></h2>
+<p class="hint">点击筛选，或拖到照片上打标签</p>
+<ul id="tags" class="list"></ul>
+</aside>
+
+<main>
+<form id="bulk" class="bulk" hidden>
+<span id="bulk-count"></span>
+<input id="bulk-tag" class="field" list="known-tags" placeholder="标签" aria-label="标签" autocomplete="off">
+<button class="button" type="submit" value="add">添加</button>
+<button class="button" type="submit" value="remove">移除</button>
+<span class="bar-gap"></span>
+<button id="bulk-all" class="button" type="button">全选当前结果</button>
+<button id="bulk-none" class="button" type="button">取消选择</button>
+</form>
+<p id="status" class="status">正在加载…</p>
+<div id="grid" class="grid"></div>
+<div id="more"></div>
+</main>
+</div>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+<datalist id="known-tags"></datalist>
+
+<template id="card">
+<article class="card">
+<input class="card-pick" type="checkbox" aria-label="选择">
+<a class="card-photo" target="_blank" rel="noopener"><img alt="" loading="lazy" decoding="async"></a>
+<div class="card-body">
+<div class="card-name"></div>
+<ul class="chips"></ul>
+<input class="card-add field" list="known-tags" placeholder="添加标签，回车确认" aria-label="添加标签" autocomplete="off">
+</div>
+</article>
+</template>
+
+</body>
+</html>
