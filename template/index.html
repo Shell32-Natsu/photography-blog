@@ -1,250 +1,112 @@
-<!DOCTYPE html>
-<!--
-    Multiverse by HTML5 UP
-    html5up.net | @ajlkn
-    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
--->
-<html>
-    <head>
-        <title>{{title}}</title>
-        <meta charset="utf-8" />
-        <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1, viewport-fit=cover"
-        />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        {% if description %}
-        <meta name="description" content="{{ description }}" />
-        {% endif %}
-        <link rel="stylesheet" href="/assets/css/main.css" />
-        <noscript
-            ><link rel="stylesheet" href="/assets/css/noscript.css"
-        /></noscript>
-        {% if extra %}
-        <script>
-            var __imageExifSuffix = "{{ extra.image_exif_query_suffix }}";
-            var __imageStyleSuffix = "{{ extra.image_style_suffix }}";
-        </script>
-        {% endif %}
-    </head>
-    <body
-        class="is-preload{% if not author and title %} has-album-title{% endif %}"
-    >
-        <!-- Wrapper -->
-        <div id="wrapper" class="main-wrapper">
-            <!-- Album Header for Album Pages -->
-            {% if not author and title %}
-            <div class="album-header">
-                <a href="/" class="home-button" title="Back to Home">
-                    <i class="fas fa-arrow-left"></i>
-                </a>
-                <div class="album-title">{{title}}</div>
-            </div>
-            {% endif %}
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>{{if .Home}}{{.Site.Title}}{{else}}{{.Title}} · {{.Site.Title}}{{end}}</title>
+{{- with or .Description .Site.Description}}
+<meta name="description" content="{{.}}">{{end}}
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0b0b0c">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{.Site.Title}}">
+<meta property="og:title" content="{{.Title}}">
+{{- with .Cover}}
+<meta property="og:image" content="{{.Thumb}}">{{end}}
+{{- range .Origins}}
+<link rel="preconnect" href="{{.}}">{{end}}
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/app.css?v={{.Site.Rev}}">
+{{- /* Before the first paint: apply the remembered theme, and mark every
+       image as it arrives so the stylesheet can fade it in. */}}
+<script>
+(function (d) {
+    try { var t = localStorage.getItem("theme"); if (t == "light" || t == "dark") d.documentElement.dataset.theme = t } catch (e) {}
+    function seen(e) { if (e.target.tagName == "IMG") e.target.classList.add("in") }
+    d.addEventListener("load", seen, true);
+    d.addEventListener("error", seen, true);
+    d.documentElement.classList.add("js");
+})(document)
+</script>
+<script src="/assets/app.js?v={{.Site.Rev}}" defer></script>
+</head>
+<body id="top">
 
-            <!-- Main -->
-            <div id="main">
-                {% if children %} {% for item in children %}
-                <article class="thumb">
-                    {% if item.category == "album" %}
-                    <a href="{{item.path}}" class="link">
-                        <img
-                            src="{% if item.thumbnail_url %}{{item.thumbnail_url}}{% else %}{{item.url}}{% endif %}"
-                            alt=""
-                        />
-                    </a>
-                    {% else %}
-                    <a href="{{item.url}}" class="image">
-                        <img
-                            src="{% if item.thumbnail_url %}{{item.thumbnail_url}}{% else %}{{item.url}}{% endif %}"
-                            alt=""
-                        />
-                        {% if item.exif %} {% if item.exif.parsed %}
-                        <span class="exif-wrapper">
-                            {% if item.exif.focal %}
-                            <span class="exif-item">
-                                <img
-                                    class="exif-icon"
-                                    src="http://s2.idinr.com/focus.png"
-                                />
-                                <span class="exif-text"
-                                    >{{item.exif.focal}}</span
-                                >
-                            </span>
-                            {% endif %} {% if item.exif.iso %}
-                            <span class="exif-item">
-                                <img
-                                    class="exif-icon"
-                                    src="http://s2.idinr.com/iso.png"
-                                />
-                                <span class="exif-text">{{item.exif.iso}}</span>
-                            </span>
-                            {% endif %} {% if item.exif.shutter %}
-                            <span class="exif-item">
-                                <img
-                                    class="exif-icon"
-                                    src="http://s2.idinr.com/shutter.png"
-                                />
-                                <span class="exif-text"
-                                    >{{item.exif.shutter}}</span
-                                >
-                            </span>
-                            {% endif %} {% if item.exif.aperture %}
-                            <span class="exif-item">
-                                <img
-                                    class="exif-icon"
-                                    src="http://s2.idinr.com/timer.png"
-                                />
-                                <span class="exif-text"
-                                    >{{item.exif.aperture}}sec.</span
-                                >
-                            </span>
-                            {% endif %}
-                        </span>
-                        {% endif %} {% endif %}
-                    </a>
-                    {% endif %} {% if item.title %}
-                    <h2>
-                        {% if item.category == "album" %}
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="18"
-                            height="18"
-                            fill="currentColor"
-                            viewBox="0 0 16 16"
-                        >
-                            <path
-                                d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"
-                            />
-                            <path
-                                d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"
-                            />
-                        </svg>
-                        {% endif %} {{item.title}}
-                    </h2>
-                    {% endif %} {% if item.description %}
-                    <p>{{item.description}}</p>
-                    {% endif %}
-                </article>
-                {% endfor %} {% endif %}
-            </div>
+<header class="bar">
+<a class="bar-home" href="/"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.5"/><circle class="dot" cx="8" cy="8" r="2.5"/></svg>Index</a>
+<nav class="bar-nav">
+<a href="https://blog.xiadong.info/about">About</a>
+<a href="https://github.com/Shell32-Natsu/photography-blog" target="_blank" rel="noopener">GitHub</a>
+<button class="bar-theme" type="button" aria-label="切换深色 / 浅色"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.75a6.25 6.25 0 0 1 0 12.5z" fill="currentColor"/></svg></button>
+</nav>
+</header>
 
-            <!-- Footer -->
-            <!-- <footer id="footer" class="panel">
-                        <div class="inner split">
-                            <div>
-                                <section>
-                                    <h2>Magna feugiat sed adipiscing</h2>
-                                    <p>Nulla consequat, ex ut suscipit rutrum, mi dolor tincidunt erat, et scelerisque turpis ipsum eget quis orci mattis aliquet. Maecenas fringilla et ante at lorem et ipsum. Dolor nulla eu bibendum sapien. Donec non pharetra dui. Nulla consequat, ex ut suscipit rutrum, mi dolor tincidunt erat, et scelerisque turpis ipsum.</p>
-                                </section>
-                                <section>
-                                    <h2>Follow me on ...</h2>
-                                    <ul class="icons">
-                                        <li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
-                                        <li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
-                                        <li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
-                                        <li><a href="#" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
-                                        <li><a href="#" class="icon brands fa-dribbble"><span class="label">Dribbble</span></a></li>
-                                        <li><a href="#" class="icon brands fa-linkedin-in"><span class="label">LinkedIn</span></a></li>
-                                    </ul>
-                                </section>
-                                <p class="copyright">
-                                    &copy; Unttled. Design: <a href="http://html5up.net">HTML5 UP</a>.
-                                </p>
-                            </div>
-                            <div>
-                                <section>
-                                    <h2>Get in touch</h2>
-                                    <form method="post" action="#">
-                                        <div class="fields">
-                                            <div class="field half">
-                                                <input type="text" name="name" id="name" placeholder="Name" />
-                                            </div>
-                                            <div class="field half">
-                                                <input type="text" name="email" id="email" placeholder="Email" />
-                                            </div>
-                                            <div class="field">
-                                                <textarea name="message" id="message" rows="4" placeholder="Message"></textarea>
-                                            </div>
-                                        </div>
-                                        <ul class="actions">
-                                            <li><input type="submit" value="Send" class="primary" /></li>
-                                            <li><input type="reset" value="Reset" /></li>
-                                        </ul>
-                                    </form>
-                                </section>
-                            </div>
-                        </div>
-                    </footer> -->
-        </div>
+<main>
+{{- if .NotFound}}
+<section class="lost">
+<h1>404</h1>
+<p>这一帧没有拍到。</p>
+<a class="link" href="/">回到首页</a>
+</section>
+{{- else if .Home}}
+<h1 class="sr">{{.Site.Title}}</h1>
+{{- else}}
+<section class="head">
+{{- with .Cover}}
+<img class="head-glow" src="{{.Thumb}}" alt="" aria-hidden="true">{{end}}
+<div class="head-text">
+<nav class="crumbs" aria-label="位置">
+{{- range $i, $c := .Crumbs}}<a href="{{$c.Href}}">{{if $i}}{{$c.Title}}{{else}}Index{{end}}</a>{{end -}}
+<span>{{printf "%02d" .Num}} / {{printf "%02d" .Of}}</span>
+</nav>
+<h1 class="head-title">{{.Title}}</h1>
+{{- with .Description}}
+<p class="head-desc">{{.}}</p>{{end}}
+<p class="head-meta"><b>{{.Count}}</b> Frames</p>
+</div>
+{{- with .Cover}}
+<figure class="poster"><img src="{{.Thumb}}" alt=""{{if .W}} width="{{.W}}" height="{{.H}}"{{end}} fetchpriority="high" style="view-transition-name:{{$.ID}}"></figure>{{end}}
+</section>
+{{- end}}
 
-        <!-- Theme Toggle Button -->
-        <button class="theme-toggle" title="Toggle Dark Mode">
-            <i class="fas fa-moon"></i>
-        </button>
+{{- if .Albums}}
+<section class="albums">
+<header class="sec"><h2><b>{{len .Albums}}</b> Albums</h2>{{if .Home}}<p><b>{{.Site.Photos}}</b> Frames</p>{{end}}</header>
+<div class="mosaic">
+{{- range $i, $a := .Albums}}
+<a class="tile{{with $a.Shape}} tile-{{.}}{{end}}" href="{{$a.Href}}" style="view-transition-name:{{$a.ID}}">
+{{- with $a.Cover}}<img src="{{.Thumb}}" alt=""{{if .W}} width="{{.W}}" height="{{.H}}"{{end}}{{if ge $i 6}} loading="lazy"{{end}} decoding="async">{{end -}}
+<span class="tile-l"><span class="tile-n">{{printf "%02d" $a.Num}}</span><span class="tile-t">{{$a.Title}}</span></span><span class="tile-c">{{$a.Count}}</span></a>
+{{- end}}
+</div>
+</section>
+{{- end}}
+{{- if .Photos}}
+<section class="gallery" aria-label="照片">
+{{- range $i, $p := .Photos}}
+<a class="ph" href="{{$p.URL}}" style="--r:{{$p.Ratio}}" data-name="{{$p.Name}}"{{with $p.Info}} data-info="{{.}}"{{end}}><img src="{{$p.Thumb}}" alt="{{$.Title}} {{$p.N}}"{{if $p.W}} width="{{$p.W}}" height="{{$p.H}}"{{end}}{{if ge $i 4}} loading="lazy"{{end}} decoding="async"></a>
+{{- end}}
+</section>
+{{- end}}
+{{- with $n := .Next}}
+<a class="next" href="{{$n.Href}}">
+<span class="next-k">Next album</span>
+<span class="next-t">{{$n.Title}}</span>
+<span class="next-c"><b>{{$n.Count}}</b> Frames</span>
+{{- with $n.Cover}}
+<img src="{{.Thumb}}" alt=""{{if .W}} width="{{.W}}" height="{{.H}}"{{end}} loading="lazy" decoding="async" style="view-transition-name:{{$n.ID}}">{{end}}
+</a>
+{{- end}}
+</main>
 
-        <!-- GitHub Button -->
-        <a
-            href="https://github.com/Shell32-Natsu/photography-blog"
-            class="github-button"
-            title="View on GitHub"
-            target="_blank"
-            rel="noopener noreferrer"
-        >
-            <i class="fab fa-github"></i>
-        </a>
+<footer class="foot">
+<span>© {{.Site.Year}}</span>
+<nav>
+<a href="https://blog.xiadong.info/about">About</a>
+<a href="https://github.com/Shell32-Natsu/photography-blog" target="_blank" rel="noopener">GitHub</a>
+<a href="#top">Top ↑</a>
+</nav>
+</footer>
 
-        <!-- About Me Button -->
-        <a
-            href="https://blog.xiadong.info/about"
-            class="about-button"
-            title="About Me"
-        >
-            <i class="fas fa-info"></i>
-        </a>
-
-        <!-- Scripts -->
-        <script src="/assets/js/jquery.min.js"></script>
-        <script src="/assets/js/jquery.poptrox.min.js"></script>
-        <script src="/assets/js/browser.min.js"></script>
-        <script src="/assets/js/breakpoints.min.js"></script>
-        <script src="/assets/js/util.js"></script>
-        <script src="/assets/js/main.js"></script>
-
-        <script>
-            // Dark Mode Toggle
-            (function () {
-                var themeToggle = document.querySelector(".theme-toggle");
-                var body = document.body;
-                var icon = themeToggle.querySelector("i");
-
-                // Check for saved theme preference or default to light
-                var currentTheme = localStorage.getItem("theme") || "light";
-
-                // Apply saved theme on load
-                if (currentTheme === "dark") {
-                    body.classList.add("dark-mode");
-                    icon.classList.remove("fa-moon");
-                    icon.classList.add("fa-sun");
-                }
-
-                // Toggle theme on button click
-                themeToggle.addEventListener("click", function () {
-                    body.classList.toggle("dark-mode");
-
-                    // Update icon
-                    if (body.classList.contains("dark-mode")) {
-                        icon.classList.remove("fa-moon");
-                        icon.classList.add("fa-sun");
-                        localStorage.setItem("theme", "dark");
-                    } else {
-                        icon.classList.remove("fa-sun");
-                        icon.classList.add("fa-moon");
-                        localStorage.setItem("theme", "light");
-                    }
-                });
-            })();
-        </script>
-    </body>
+</body>
 </html>
