@@ -4,11 +4,10 @@
 	"main": "src/index.ts",
 	"compatibility_date": "2026-11-01",
 
-	// Served at its own domain; Cloudflare creates the DNS record and the
-	// certificate. The workers.dev address stays on as well, without separate
-	// preview addresses.
+	// Served at its own domain only; Cloudflare creates the DNS record and the
+	// certificate. The workers.dev address and preview addresses are off.
 	"routes": [{ "pattern": "photo-admin.xiadong.info", "custom_domain": true }],
-	"workers_dev": true,
+	"workers_dev": false,
 	"preview_urls": false,
 
 	// The pages in pages/ are bundled into the Worker as text and served by it.
