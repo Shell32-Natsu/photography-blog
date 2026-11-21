@@ -292,6 +292,11 @@ grid.addEventListener("drop", (e) => {
 
 /* ── the bar above the grid ── */
 
+// Things that stay on screen below the top bar need to know how tall it is.
+new ResizeObserver(([bar]) => {
+	document.documentElement.style.setProperty("--bar-height", bar.target.getBoundingClientRect().height + "px");
+}).observe($(".bar"));
+
 $("#search").addEventListener("input", (e) => {
 	state.query = e.target.value;
 	renderGrid();
